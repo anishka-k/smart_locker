@@ -8,6 +8,16 @@ unsigned car current_state;
 int green = /*PIN NUMBER*/;
 int red = /*PIN NUMBER*/;
 
+
+//TODO: make these
+void unlock_servo() {
+
+}
+
+void lock_servo() {
+
+}
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
@@ -34,6 +44,8 @@ void loop() {
       digitalWrite(green, HIGH);
       delay(2000);
       digitalWrite(green, LOW);
+
+      unlock_servo();
       current_state = unlock;
     } else if (/*passcode inputted incorrectly*/) {
       // flashes the red led 3 times
@@ -52,6 +64,8 @@ void loop() {
 
   case unlock: 
     if (/*wants to be locked*/) {
+      lock_servo();
+
       current_state = lock;
     } else {
       break;
