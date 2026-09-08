@@ -8,8 +8,8 @@ unsigned car current_state;
 int green = /*PIN NUMBER*/;
 int red = /*PIN NUMBER*/;
 
-
 //TODO: make these
+//TODO: fix the time conditions
 void unlock_servo() {
 
 }
