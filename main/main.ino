@@ -208,6 +208,7 @@ void loop() {
 
   // TODO: make it so that the non-numbers cannot be counted as part of a code attempt
   // TODO: make it not lock and unlock back to back
+  // TODO: get a limit switch?!?
 
   int value = analogRead(A0);
 
