@@ -33,6 +33,9 @@ int digitsEntered = 0;
 // tracks if a number is being held
 bool keyHeld = false;
 
+// counts * presses while unlocked
+int starPresses = 0;
+
 // saved passcode
 int da_code[4] = {1,2,3,4};
 
@@ -40,7 +43,7 @@ int da_code[4] = {1,2,3,4};
 int zeros[4] = {0,0,0,0};
 int nines[4] = {9,9,9,9};
 
-// timer start time (lowkey the name is obvious)
+// timer start time
 unsigned long stateStartTime = 0;
 
 
@@ -50,8 +53,6 @@ unsigned long stateStartTime = 0;
 
 #define SERVO_PIN 9
 
-// starting pulse widths
-// adjust these after testing the actual servo
 #define LOCK_PULSE 1000
 #define UNLOCK_PULSE 2000
 
@@ -67,6 +68,7 @@ unsigned long stateStartTime = 0;
 
 // identifies which number is being pressed
 char identifyKey(int value) {
+
   if (value > 0.975 * one && value < 1.025 * one) return '1';
   else if (value > 0.975 * two && value < 1.025 * two) return '2';
   else if (value > 0.975 * three && value < 1.025 * three) return '3';
@@ -79,24 +81,27 @@ char identifyKey(int value) {
   else if (value > 0.975 * zero && value < 1.025 * zero) return '0';
   else if (value > 0.975 * asterick && value < 1.025 * asterick) return '*';
   else if (value > 0.975 * hashtag && value < 1.025 * hashtag) return '#';
-  else return 'x'; // no key pressed / value doesn't match a digit
+  else return 'x';
 }
 
 
-// compares 2 arrays, returns true if the are the same
-// should probably have fail safes for different size arrays, but it'll probably be fine (cope)
-bool compareArrays (int array1[], int array2[]) {
+// compares 2 arrays
+bool compareArrays(int array1[], int array2[]) {
+
   for (int i = 0; i < 4; i++) {
+
     if (array1[i] != array2[i]) {
       return false;
     }
   }
+
   return true;
 }
 
 
-// clears the entered code
+// clears entered code
 void clearCode() {
+
   for (int i = 0; i < 4; i++) {
     code[i] = 0;
   }
@@ -110,19 +115,30 @@ void clearCode() {
 // --------------------------------------------------
 
 void savePasscode() {
+
   for (int i = 0; i < 4; i++) {
-    EEPROM.update(EEPROM_CODE_START + i, da_code[i]);
+
+    EEPROM.update(
+      EEPROM_CODE_START + i,
+      da_code[i]
+    );
   }
 
-  EEPROM.update(EEPROM_MARKER, EEPROM_SAVED);
+  EEPROM.update(
+    EEPROM_MARKER,
+    EEPROM_SAVED
+  );
 }
 
 
 void loadPasscode() {
+
   if (EEPROM.read(EEPROM_MARKER) == EEPROM_SAVED) {
 
     for (int i = 0; i < 4; i++) {
-      da_code[i] = EEPROM.read(EEPROM_CODE_START + i);
+
+      da_code[i] =
+        EEPROM.read(EEPROM_CODE_START + i);
     }
 
     Serial.println("saved password loaded");
@@ -180,144 +196,155 @@ void lock_servo() {
 }
 
 
+// --------------------------------------------------
+// SETUP
+// --------------------------------------------------
+
 void setup() {
-  // put your setup code here, to run once:
+
   Serial.begin(9600);
 
-//  pinMode(red, output);
-//  pinMode(green, output);
-
-  // I have A0 as the port that has the key pad
   pinMode(A0, INPUT);
 
-  // servo setup
   setup_servo();
+
   lock_servo();
 
-  // load password if one was previously saved
   loadPasscode();
 }
 
 
+// --------------------------------------------------
+// LOOP
+// --------------------------------------------------
+
 void loop() {
-
-  delay(1000);
-
-  // removed the original delay(1000)
-  // because it made keypad reading really slow
-
-  // TODO: make it so that the non-numbers cannot be counted as part of a code attempt
-  // TODO: make it not lock and unlock back to back
-  // TODO: get a limit switch?!?
 
   int value = analogRead(A0);
 
-  // the value currently being pressed
   char key = identifyKey(value);
 
-  // if a number is being pressed
+  // tells the state machine that this is a NEW press
+  bool newKeyPress = false;
+
+
+  // --------------------------------------------------
+  // KEY PRESS DETECTION
+  // --------------------------------------------------
+
   if (key != 'x') {
 
-    // A digit key is currently pressed
     if (!keyHeld) {
 
-      // This is a new press (wasn't pressed last time we checked)
-      // record it once, ignoring the fact that it'll still read
-      // as pressed for the next several loop() calls
+      newKeyPress = true;
 
-      // added digitsEntered < 4 so code[] doesn't go out of bounds
-      if (digitsEntered < 4) {
-
-        code[digitsEntered] = (key - '0');
-        digitsEntered++;
-
-        // for debugging
-        Serial.print("Digit entered: ");
-        Serial.println(key);
-
-        if (digitsEntered == 4) {
-
-          Serial.print("Full code: ");
-
-          for (int i = 0; i < 4; i++) {
-            Serial.print(code[i]);
-          }
-
-          Serial.println();
-        }
-      }
+      Serial.print("Key pressed: ");
+      Serial.println(key);
     }
 
-    // remember that a key is being held down
     keyHeld = true;
   }
 
   else {
 
-    // no key pressed right now, so next press counts as new
     keyHeld = false;
   }
 
-  delay(20);
 
+  // --------------------------------------------------
+  // ONLY STORE NUMBER KEYS AS PASSWORD DIGITS
+  // --------------------------------------------------
+
+  if (newKeyPress &&
+      current_state == powered_on &&
+      key >= '0' &&
+      key <= '9') {
+
+    if (digitsEntered < 4) {
+
+      code[digitsEntered] = key - '0';
+
+      digitsEntered++;
+
+      Serial.print("Digit entered: ");
+      Serial.println(key);
+
+      if (digitsEntered == 4) {
+
+        Serial.print("Full code: ");
+
+        for (int i = 0; i < 4; i++) {
+          Serial.print(code[i]);
+        }
+
+        Serial.println();
+      }
+    }
+  }
+
+
+  // --------------------------------------------------
+  // STATE MACHINE
+  // --------------------------------------------------
 
   switch (current_state) {
 
-    // default state
+
+    // ==================================================
+    // POWERED OFF
+    // ==================================================
+
     case powered_off:
 
-      // switched when any key is pressed
-      if (key != 'x') {
+      if (newKeyPress) {
 
-        // turns leds off
-        // digitalWrite(red, LOW);
-        // digitalWrite(green, LOW);
-
-        // don't count the wake-up key as password digit
         clearCode();
 
         current_state = powered_on;
-      }
 
-      else {
-        Serial.println("powered off");
+        Serial.println("powered on");
+        Serial.println("enter password");
       }
 
       break;
 
 
+    // ==================================================
+    // POWERED ON
+    // ==================================================
+
     case powered_on:
 
-      if (digitsEntered == 4 && compareArrays(da_code, code)) {
+      if (digitsEntered == 4 &&
+          compareArrays(da_code, code)) {
 
-        // turns the green led on for two seconds
-        // digitalWrite(green, HIGH);
-        // delay(2000);
-        // digitalWrite(green, LOW);
+        Serial.println("correct password");
 
         unlock_servo();
 
         clearCode();
 
+        // reset * counter every time we unlock
+        starPresses = 0;
+
         current_state = unlock;
+
+        Serial.println("press * three times to lock");
       }
 
-      else if (digitsEntered == 4 && !compareArrays(da_code, code)) {
 
-        // flashes the red led 3 times
-        // for (int i = 0; i < 3; i++) {
-        //   digitalWrite(red, HIGH);
-        //   delay(1000);
-        //   digitalWrite(red, LOW);
-        //   delay(1000);
-        // }
+      else if (digitsEntered == 4 &&
+               !compareArrays(da_code, code)) {
+
+        Serial.println("wrong password");
 
         clearCode();
 
-        current_state = wrong_passcode;
-
         stateStartTime = millis();
+
+        current_state = wrong_passcode;
       }
+
 
       else if (false) {
 
@@ -326,58 +353,68 @@ void loop() {
         stateStartTime = millis();
       }
 
-      else {
-
-        Serial.println("powered on");
-      }
-
       break;
 
+
+    // ==================================================
+    // UNLOCKED
+    // ==================================================
 
     case unlock:
 
-      // temporary testing:
-      // after 5 seconds unlocked, lock again
+      // Stay unlocked until * is pressed three times
 
-      if (stateStartTime == 0) {
-        stateStartTime = millis();
-      }
+      if (newKeyPress && key == '*') {
 
-      if (millis() - stateStartTime >= 5000) {
+        starPresses++;
 
-        lock_servo();
+        Serial.print("* pressed: ");
+        Serial.print(starPresses);
+        Serial.println("/3");
 
-        stateStartTime = millis();
 
-        current_state = lock;
-      }
+        if (starPresses >= 3) {
 
-      else {
+          Serial.println("locking locker");
 
-        Serial.println("unlock");
+          lock_servo();
+
+          starPresses = 0;
+
+          stateStartTime = millis();
+
+          current_state = lock;
+        }
       }
 
       break;
 
 
+    // ==================================================
+    // LOCK
+    // ==================================================
+
     case lock:
 
+      // give servo 1 second to move
       if (millis() - stateStartTime >= 1000) {
 
         clearCode();
 
         stateStartTime = 0;
 
+        Serial.println("locker locked");
+        Serial.println("enter password");
+
         current_state = powered_on;
-      }
-
-      else {
-
-        Serial.println("lock");
       }
 
       break;
 
+
+    // ==================================================
+    // WRONG PASSWORD
+    // ==================================================
 
     case wrong_passcode:
 
@@ -385,24 +422,24 @@ void loop() {
 
         clearCode();
 
+        Serial.println("try again");
+        Serial.println("enter password");
+
         current_state = powered_on;
-      }
-
-      else {
-
-        Serial.println("wrong passcode");
       }
 
       break;
 
 
+    // ==================================================
+    // SET PASSCODE
+    // ==================================================
+
     case set_passcode:
 
-      // keeping her original 9999 testing idea
-      if (digitsEntered == 4 && compareArrays(code, nines)) {
+      if (digitsEntered == 4 &&
+          compareArrays(code, nines)) {
 
-        // temporary example new password
-        // replace this later with the actual password-setting method
         da_code[0] = 9;
         da_code[1] = 9;
         da_code[2] = 9;
@@ -415,11 +452,9 @@ void loop() {
         current_state = powered_on;
       }
 
-      else {
-
-        Serial.println("set passcode");
-      }
-
       break;
   }
+
+
+  delay(20);
 }
