@@ -66,18 +66,20 @@ unsigned long stateStartTime = 0;
 
 
 // identifies which number is being pressed
-int identifyKey(int value) {
-  if (value > 0.975 * one && value < 1.025 * one) return 1;
-  else if (value > 0.975 * two && value < 1.025 * two) return 2;
-  else if (value > 0.975 * three && value < 1.025 * three) return 3;
-  else if (value > 0.975 * four && value < 1.025 * four) return 4;
-  else if (value > 0.975 * five && value < 1.025 * five) return 5;
-  else if (value > 0.975 * six && value < 1.025 * six) return 6;
-  else if (value > 0.975 * seven && value < 1.025 * seven) return 7;
-  else if (value > 0.975 * eight && value < 1.025 * eight) return 8;
-  else if (value > 0.975 * nine && value < 1.025 * nine) return 9;
-  else if (value > 0.975 * zero && value < 1.025 * zero) return 0;
-  else return -1; // no key pressed / value doesn't match a digit
+char identifyKey(int value) {
+  if (value > 0.975 * one && value < 1.025 * one) return '1';
+  else if (value > 0.975 * two && value < 1.025 * two) return '2';
+  else if (value > 0.975 * three && value < 1.025 * three) return '3';
+  else if (value > 0.975 * four && value < 1.025 * four) return '4';
+  else if (value > 0.975 * five && value < 1.025 * five) return '5';
+  else if (value > 0.975 * six && value < 1.025 * six) return '6';
+  else if (value > 0.975 * seven && value < 1.025 * seven) return '7';
+  else if (value > 0.975 * eight && value < 1.025 * eight) return '8';
+  else if (value > 0.975 * nine && value < 1.025 * nine) return '9';
+  else if (value > 0.975 * zero && value < 1.025 * zero) return '0';
+  else if (value > 0.975 * asterick && value < 1.025 * asterick) return '*';
+  else if (value > 0.975 * hashtag && value < 1.025 * hashtag) return '#';
+  else return 'x'; // no key pressed / value doesn't match a digit
 }
 
 
@@ -199,16 +201,20 @@ void setup() {
 
 void loop() {
 
+  delay(1000);
+
   // removed the original delay(1000)
   // because it made keypad reading really slow
+
+  // TODO: make it so that the non-numbers cannot be counted as part of a code attempt
 
   int value = analogRead(A0);
 
   // the value currently being pressed
-  int key = identifyKey(value);
+  char key = identifyKey(value);
 
   // if a number is being pressed
-  if (key != -1) {
+  if (key != 'x') {
 
     // A digit key is currently pressed
     if (!keyHeld) {
@@ -220,7 +226,7 @@ void loop() {
       // added digitsEntered < 4 so code[] doesn't go out of bounds
       if (digitsEntered < 4) {
 
-        code[digitsEntered] = key;
+        code[digitsEntered] = (key - '0');
         digitsEntered++;
 
         // for debugging
@@ -259,7 +265,7 @@ void loop() {
     case powered_off:
 
       // switched when any key is pressed
-      if (key != -1) {
+      if (key != 'x') {
 
         // turns leds off
         // digitalWrite(red, LOW);
