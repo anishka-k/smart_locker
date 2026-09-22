@@ -207,6 +207,7 @@ void loop() {
   // because it made keypad reading really slow
 
   // TODO: make it so that the non-numbers cannot be counted as part of a code attempt
+  // TODO: make it not lock and unlock back to back
 
   int value = analogRead(A0);
 
