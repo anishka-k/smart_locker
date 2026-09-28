@@ -1,5 +1,3 @@
-#include <EEPROM.h>
-
 // enum containing all the states of our state machine
 enum {
   powered_off, powered_on, lock, unlock, wrong_passcode, set_passcode
@@ -38,10 +36,6 @@ int starPresses = 0;
 
 // saved passcode
 int da_code[4] = {1,2,3,4};
-
-// temp arrays for conditions testing
-int zeros[4] = {0,0,0,0};
-int nines[4] = {9,9,9,9};
 
 // timer start time
 unsigned long stateStartTime = 0;
@@ -114,34 +108,95 @@ void clearCode() {
 // EEPROM FUNCTIONS
 // --------------------------------------------------
 
+// writes one byte directly to EEPROM
+void EEPROM_write(unsigned int address, unsigned char data) {
+
+  // wait for previous write to finish
+  while (EECR & (1 << EEPE));
+
+  // set address
+  EEAR = address;
+
+  // set data
+  EEDR = data;
+
+  // save interrupt state
+  unsigned char oldSREG = SREG;
+
+  // disable interrupts
+  cli();
+
+  // enable EEPROM write
+  EECR |= (1 << EEMPE);
+
+  // start EEPROM write
+  EECR |= (1 << EEPE);
+
+  // restore interrupt state
+  SREG = oldSREG;
+}
+
+
+// reads one byte directly from EEPROM
+unsigned char EEPROM_read(unsigned int address) {
+
+  // wait for previous write to finish
+  while (EECR & (1 << EEPE));
+
+  // set address
+  EEAR = address;
+
+  // start EEPROM read
+  EECR |= (1 << EERE);
+
+  // return data
+  return EEDR;
+}
+
+
+// saves passcode
 void savePasscode() {
 
   for (int i = 0; i < 4; i++) {
 
-    EEPROM.update(
+    EEPROM_write(
       EEPROM_CODE_START + i,
       da_code[i]
     );
   }
 
-  EEPROM.update(
+  EEPROM_write(
     EEPROM_MARKER,
     EEPROM_SAVED
   );
+
+  Serial.println("password saved");
 }
 
 
+// loads passcode
 void loadPasscode() {
 
-  if (EEPROM.read(EEPROM_MARKER) == EEPROM_SAVED) {
+  if (EEPROM_read(EEPROM_MARKER) == EEPROM_SAVED) {
 
     for (int i = 0; i < 4; i++) {
 
       da_code[i] =
-        EEPROM.read(EEPROM_CODE_START + i);
+        EEPROM_read(EEPROM_CODE_START + i);
     }
 
     Serial.println("saved password loaded");
+  }
+
+  else {
+
+    Serial.println("no saved password");
+
+    current_state = set_passcode;
+
+    clearCode();
+
+    Serial.println("enter new 4 digit password");
   }
 }
 
@@ -252,11 +307,12 @@ void loop() {
 
 
   // --------------------------------------------------
-  // ONLY STORE NUMBER KEYS AS PASSWORD DIGITS
+  // STORE NUMBER KEYS AS PASSWORD DIGITS
   // --------------------------------------------------
 
   if (newKeyPress &&
-      current_state == powered_on &&
+      (current_state == powered_on ||
+       current_state == set_passcode) &&
       key >= '0' &&
       key <= '9') {
 
@@ -330,6 +386,7 @@ void loop() {
         current_state = unlock;
 
         Serial.println("press * three times to lock");
+        Serial.println("press # to change password");
       }
 
 
@@ -343,14 +400,6 @@ void loop() {
         stateStartTime = millis();
 
         current_state = wrong_passcode;
-      }
-
-
-      else if (false) {
-
-        current_state = set_passcode;
-
-        stateStartTime = millis();
       }
 
       break;
@@ -385,6 +434,19 @@ void loop() {
 
           current_state = lock;
         }
+      }
+
+
+      // press # while unlocked to change passcode
+      if (newKeyPress && key == '#') {
+
+        clearCode();
+
+        starPresses = 0;
+
+        current_state = set_passcode;
+
+        Serial.println("enter new 4 digit password");
       }
 
       break;
@@ -437,17 +499,29 @@ void loop() {
 
     case set_passcode:
 
-      if (digitsEntered == 4 &&
-          compareArrays(code, nines)) {
+      if (digitsEntered == 4) {
 
-        da_code[0] = 9;
-        da_code[1] = 9;
-        da_code[2] = 9;
-        da_code[3] = 9;
+        da_code[0] = code[0];
+        da_code[1] = code[1];
+        da_code[2] = code[2];
+        da_code[3] = code[3];
 
         savePasscode();
 
+        Serial.print("new password saved: ");
+
+        for (int i = 0; i < 4; i++) {
+          Serial.print(da_code[i]);
+        }
+
+        Serial.println();
+
         clearCode();
+
+        lock_servo();
+
+        Serial.println("locker locked");
+        Serial.println("enter password");
 
         current_state = powered_on;
       }
