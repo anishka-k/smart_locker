@@ -299,6 +299,7 @@ void savePasscode() {
 void loadPasscode() {
 
   if (EEPROM_read(EEPROM_MARKER) == EEPROM_SAVED) {
+    
     for (int i = 0; i < 4; i++) {
       da_code[i] =
         EEPROM_read(
@@ -311,7 +312,9 @@ void loadPasscode() {
     current_state = powered_on;
 
     Serial.println("enter password");
+
   } else {
+
     Serial.println("no saved password");
 
     current_state = set_passcode;
@@ -967,56 +970,28 @@ void loop() {
   // STORE PASSWORD DIGITS
   // ========================================================
 
-  if (
-    newKeyPress &&
+  if (newKeyPress && 
+      (current_state == powered_on || 
+      current_state == set_passcode) && 
+      key >= '0' && key <= '9') {
 
-    (
-      current_state ==
-        powered_on ||
+    if (digitsEntered < 4) {
 
-      current_state ==
-        set_passcode
-    ) &&
-
-    key >= '0' &&
-    key <= '9'
-  ) {
-
-    if (
-      digitsEntered < 4
-    ) {
-
-      code[digitsEntered] =
-        key - '0';
-
+      code[digitsEntered] = key - '0';
 
       digitsEntered++;
 
+      Serial.print("Digit entered: ");
 
-      Serial.print(
-        "Digit entered: "
-      );
-
-      Serial.println(
-        key
-      );
+      Serial.println(key);
 
 
-      if (
-        digitsEntered == 4
-      ) {
+      if (digitsEntered == 4) {
 
-        Serial.print(
-          "Full code: "
-        );
+        Serial.print("Full code: ");
 
 
-        for (
-          int i = 0;
-          i < 4;
-          i++
-        ) {
-
+        for (int i = 0; i < 4; i++) {
           Serial.print(
             code[i]
           );
@@ -1028,15 +1003,11 @@ void loop() {
     }
   }
 
-
   // ========================================================
   // STATE MACHINE
   // ========================================================
 
-  switch (
-    current_state
-  ) {
-
+  switch (current_state) {
 
     // ======================================================
     // POWERED OFF
@@ -1044,30 +1015,20 @@ void loop() {
 
     case powered_off:
 
-      if (
-        newKeyPress
-      ) {
+      if (newKeyPress) {
 
         clearCode();
 
-        current_state =
-          powered_on;
+        current_state = powered_on;
 
-        lastActivityTime =
-          millis();
+        lastActivityTime = millis();
 
-        Serial.println(
-          "powered on"
-        );
+        Serial.println("powered on");
 
-        Serial.println(
-          "enter password"
-        );
+        Serial.println("enter password");
       }
 
       break;
-
-
 
     // ======================================================
     // WAITING FOR PASSWORD
@@ -1075,113 +1036,60 @@ void loop() {
 
     case powered_on:
 
-
       // correct password
-      if (
-        digitsEntered == 4 &&
-        compareArrays(
-          da_code,
-          code
-        )
-      ) {
+      if (digitsEntered == 4 && compareArrays(da_code, code)) {
 
-        Serial.println(
-          "correct password"
-        );
-
+        Serial.println("correct password");
 
         clearCode();
 
-
-        starPresses =
-          0;
-
+        starPresses = 0;
 
         // begin servo unlock
         unlock_servo();
 
+        current_state = unlocking;
 
-        current_state =
-          unlocking;
-
-
-        lastActivityTime =
-          millis();
+        lastActivityTime = millis();
       }
 
 
       // incorrect password
-      else if (
-        digitsEntered == 4 &&
-        !compareArrays(
-          da_code,
-          code
-        )
-      ) {
+      else if (digitsEntered == 4 && !compareArrays(da_code, code)) {
 
-        Serial.println(
-          "wrong password"
-        );
-
+        Serial.println("wrong password");
 
         clearCode();
 
+        stateStartTime = millis();
 
-        stateStartTime =
-          millis();
+        current_state = wrong_passcode;
 
-
-        current_state =
-          wrong_passcode;
-
-
-        lastActivityTime =
-          millis();
+        lastActivityTime = millis();
       }
-
       break;
-
-
 
     // ======================================================
     // SERVO IS UNLOCKING
     // ======================================================
 
     case unlocking:
-
-
       // Check for physical blockage
-      if (
-        servoBlocked()
-      ) {
-
+      if (servoBlocked()) {
         revertServo();
-
         break;
       }
 
-
       // successful movement completed
-      if (
-        millis() -
-        servoMoveStartTime >=
-        SERVO_MOVE_TIME
-      ) {
+      if (millis() - servoMoveStartTime >= SERVO_MOVE_TIME) {
 
         disable_servo_pwm();
 
+        servoCurrentPulse = UNLOCK_PULSE;
 
-        servoCurrentPulse =
-          UNLOCK_PULSE;
+        current_state = unlock;
 
-
-        current_state =
-          unlock;
-
-
-        starPresses =
-          0;
-
+        starPresses = 0;
 
         Serial.println("locker unlocked");
 
