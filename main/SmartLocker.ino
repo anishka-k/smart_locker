@@ -400,48 +400,36 @@ void revertServo() {
 void setupWakeInterrupt() {
 
   // D2 / PD2 input
-  DDRD &=
-    ~(1 << DDD2);
+  DDRD &= ~(1 << DDD2);
 
   // internal pull-up ON
-  PORTD |=
-    (1 << PORTD2);
+  PORTD |= (1 << PORTD2);
 
   // INT0 LOW level interrupt
   //
   // Low-level INT0 can wake the ATmega328P
   // from Power-Down mode.
-  EICRA &=
-    ~(
-      (1 << ISC01) |
-      (1 << ISC00)
-    );
+  EICRA &= ~((1 << ISC01) | (1 << ISC00));
 
   // clear interrupt flag
-  EIFR |=
-    (1 << INTF0);
+  EIFR |= (1 << INTF0);
 
   // enable INT0
-  EIMSK |=
-    (1 << INT0);
+  EIMSK |= (1 << INT0);
 }
 
 
 // wake interrupt
 ISR(INT0_vect) {
 
-  wakeInterruptOccurred =
-    true;
+  wakeInterruptOccurred = true;
 
   // temporarily turn interrupt off
   // so LOW button does not continuously
   // trigger after waking
-  EIMSK &=
-    ~(1 << INT0);
+  EIMSK &= ~(1 << INT0);
 }
 
-
-// ============================================================
 // SLEEP FUNCTIONS
 
 
@@ -450,33 +438,24 @@ void enterSleep() {
   Serial.println("entering power down sleep");
 
   Serial.flush();
-
-
-  // --------------------------------------------------
+  
   // STOP SERVO
-  // --------------------------------------------------
 
   disable_servo_pwm();
 
   servoPowerOff();
 
-
-  // --------------------------------------------------
   // DISABLE ADC
-  // --------------------------------------------------
 
   ADCSRA &=
     ~(1 << ADEN);
 
 
   // disable analog comparator
-  ACSR |=
-    (1 << ACD);
+  ACSR |= (1 << ACD);
 
 
-  // --------------------------------------------------
   // POWER REDUCTION
-  // --------------------------------------------------
 
   // ADC off
   PRR |= (1 << PRADC);
