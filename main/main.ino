@@ -518,33 +518,20 @@ bool servoBlocked() {
 // return servo to previous position
 void revertServo() {
 
-  Serial.println(
-    "BLOCKED MOTOR DETECTED"
-  );
+  Serial.println("BLOCKED MOTOR DETECTED");
 
-  Serial.println(
-    "reverting servo"
-  );
-
+  Serial.println("reverting servo");
 
   // save failed target
-  int failedTarget =
-    servoTargetPulse;
-
+  int failedTarget = servoTargetPulse;
 
   // move back to previous position
-  set_servo_pulse(
-    previousServoPulse
-  );
+  set_servo_pulse(previousServoPulse);
+
+  servoTargetPulse = previousServoPulse;
 
 
-  servoTargetPulse =
-    previousServoPulse;
-
-
-  servoMoveStartTime =
-    millis();
-
+  servoMoveStartTime = millis();
 
   // Wait only for the actual physical reversal.
   // Main blockage was already detected.
@@ -554,31 +541,20 @@ void revertServo() {
   disable_servo_pwm();
 
 
-  Serial.println(
-    "servo returned to previous position"
-  );
-
+  Serial.println("servo returned to previous position");
 
   // If attempted unlock failed,
   // locker remains locked.
-  if (failedTarget ==
-      UNLOCK_PULSE) {
+  if (failedTarget == UNLOCK_PULSE) {
+    servoCurrentPulse = LOCK_PULSE;
 
-    servoCurrentPulse =
-      LOCK_PULSE;
-
-    current_state =
-      powered_on;
+    current_state = powered_on;
 
     clearCode();
 
-    Serial.println(
-      "locker remains locked"
-    );
+    Serial.println("locker remains locked");
 
-    Serial.println(
-      "enter password"
-    );
+    Serial.println("enter password");
   }
 
 
@@ -586,30 +562,20 @@ void revertServo() {
   // locker remains unlocked.
   else {
 
-    servoCurrentPulse =
-      UNLOCK_PULSE;
+    servoCurrentPulse = UNLOCK_PULSE;
 
-    current_state =
-      unlock;
+    current_state = unlock;
 
     starPresses = 0;
 
-    Serial.println(
-      "locker remains unlocked"
-    );
+    Serial.println("locker remains unlocked");
 
-    Serial.println(
-      "remove blockage and try again"
-    );
+    Serial.println("remove blockage and try again");
 
-    Serial.println(
-      "press * three times to lock"
-    );
+    Serial.println("press * three times to lock");
   }
 
-
-  lastActivityTime =
-    millis();
+  lastActivityTime = millis();
 }
 
 
@@ -1217,23 +1183,13 @@ void loop() {
           0;
 
 
-        Serial.println(
-          "locker unlocked"
-        );
+        Serial.println("locker unlocked");
 
+        Serial.println("press * three times to lock");
 
-        Serial.println(
-          "press * three times to lock"
-        );
+        Serial.println("press # to change password");
 
-
-        Serial.println(
-          "press # to change password"
-        );
-
-
-        lastActivityTime =
-          millis();
+        lastActivityTime = millis();
       }
 
       break;
@@ -1245,80 +1201,45 @@ void loop() {
     // ======================================================
 
     case unlock:
-
-
       // Press * three times to lock
-      if (
-        newKeyPress &&
-        key == '*'
-      ) {
+      if (newKeyPress && key == '*') {
 
         starPresses++;
 
+        Serial.print("* pressed: ");
 
-        Serial.print(
-          "* pressed: "
-        );
+        Serial.print(starPresses);
 
-        Serial.print(
-          starPresses
-        );
-
-        Serial.println(
-          "/3"
-        );
+        Serial.println("/3");
 
 
-        if (
-          starPresses >= 3
-        ) {
+        if (starPresses >= 3) {
+          Serial.println("locking locker");
 
-          Serial.println(
-            "locking locker"
-          );
-
-
-          starPresses =
-            0;
-
+          starPresses = 0;
 
           lock_servo();
 
+          current_state = locking;
 
-          current_state =
-            locking;
-
-
-          lastActivityTime =
-            millis();
+          lastActivityTime = millis();
         }
       }
 
 
       // Press # to change password
-      if (
-        newKeyPress &&
-        key == '#'
-      ) {
+      if (newKeyPress && key == '#') {
 
         clearCode();
 
-
-        starPresses =
-          0;
+        starPresses = 0;
 
 
-        current_state =
-          set_passcode;
+        current_state = set_passcode;
 
+        Serial.println("enter new 4 digit password");
 
-        Serial.println(
-          "enter new 4 digit password"
-        );
-
-
-        lastActivityTime =
-          millis();
+        lastActivityTime = millis();
       }
 
       break;
@@ -1330,44 +1251,24 @@ void loop() {
     // ======================================================
 
     case locking:
-
-
       // Check for physical blockage
-      if (
-        servoBlocked()
-      ) {
-
+      if (servoBlocked()) {
         revertServo();
-
         break;
       }
 
-
       // Successful lock movement
-      if (
-        millis() -
-        servoMoveStartTime >=
-        SERVO_MOVE_TIME
-      ) {
+      if (millis() - servoMoveStartTime >= SERVO_MOVE_TIME) {
 
         disable_servo_pwm();
 
+        servoCurrentPulse = LOCK_PULSE;
 
-        servoCurrentPulse =
-          LOCK_PULSE;
+        current_state = lock;
 
+        stateStartTime = millis();
 
-        current_state =
-          lock;
-
-
-        stateStartTime =
-          millis();
-
-
-        Serial.println(
-          "locker locked"
-        );
+        Serial.println("locker locked");
       }
 
       break;
@@ -1380,38 +1281,21 @@ void loop() {
 
     case lock:
 
-
       // short state before returning
       // to password entry
-      if (
-        millis() -
-        stateStartTime >=
-        250
-      ) {
+      if (millis() - stateStartTime >= 250) {
 
         clearCode();
 
+        stateStartTime = 0;
 
-        stateStartTime =
-          0;
+        current_state = powered_on;
 
+        lastActivityTime = millis();
 
-        current_state =
-          powered_on;
-
-
-        lastActivityTime =
-          millis();
-
-
-        Serial.println(
-          "enter password"
-        );
+        Serial.println("enter password");
       }
-
       break;
-
-
 
     // ======================================================
     // WRONG PASSWORD
@@ -1419,37 +1303,20 @@ void loop() {
 
     case wrong_passcode:
 
-
-      if (
-        millis() -
-        stateStartTime >=
-        5000
-      ) {
+      if (millis() - stateStartTime >= 5000) {
 
         clearCode();
 
-
-        Serial.println(
-          "try again"
-        );
+        Serial.println("try again");
 
 
-        Serial.println(
-          "enter password"
-        );
+        Serial.println("enter password");
 
+        current_state = powered_on;
 
-        current_state =
-          powered_on;
-
-
-        lastActivityTime =
-          millis();
+        lastActivityTime = millis();
       }
-
       break;
-
-
 
     // ======================================================
     // SET NEW PASSWORD
@@ -1457,70 +1324,33 @@ void loop() {
 
     case set_passcode:
 
+      if (digitsEntered == 4) {
 
-      if (
-        digitsEntered == 4
-      ) {
-
-        da_code[0] =
-          code[0];
-
-        da_code[1] =
-          code[1];
-
-        da_code[2] =
-          code[2];
-
-        da_code[3] =
-          code[3];
-
+        for (int i = 0; i < 4; i++) {
+          da_code[i] = code[i];
+        }
 
         savePasscode();
 
+        Serial.print("new password saved: ");
 
-        Serial.print(
-          "new password saved: "
-        );
-
-
-        for (
-          int i = 0;
-          i < 4;
-          i++
-        ) {
-
-          Serial.print(
-            da_code[i]
-          );
+        for (int i = 0; i < 4; i++) {
+          Serial.print(da_code[i]);
         }
-
 
         Serial.println();
 
-
         clearCode();
 
+        Serial.println("locker remains unlocked");
 
-        Serial.println(
-          "locker remains unlocked"
-        );
+        Serial.println("press * three times to lock");
 
+        current_state = unlock;
 
-        Serial.println(
-          "press * three times to lock"
-        );
+        starPresses = 0;
 
-
-        current_state =
-          unlock;
-
-
-        starPresses =
-          0;
-
-
-        lastActivityTime =
-          millis();
+        lastActivityTime = millis();
       }
 
       break;
@@ -1537,21 +1367,10 @@ void loop() {
   // - no partial password has been entered
   // - no activity for 10 seconds
 
-  if (
-    current_state ==
-      powered_on &&
-
-    digitsEntered ==
-      0 &&
-
-    millis() -
-    lastActivityTime >=
-      SLEEP_TIME
-  ) {
-
+  if (current_state == powered_on && 
+      digitsEntered == 0 &&
+      millis() - lastActivityTime >= SLEEP_TIME) {
     enterSleep();
   }
-
-
   delay(20);
 }
