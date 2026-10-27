@@ -38,7 +38,8 @@ enum {
   locking,
   lock,
   wrong_passcode,
-  set_passcode
+  set_passcode,
+  low_battery
 };
 
 unsigned char current_state = powered_off;
@@ -62,22 +63,17 @@ int asterick = 829;
 int zero = 668;
 int hashtag = 462;
 
-
 // place holder code for what the user inputs
 int code[4] = {0, 0, 0, 0};
-
 
 // stores the number of digits inputed
 int digitsEntered = 0;
 
-
 // tracks if a number is being held
 bool keyHeld = false;
 
-
 // counts * presses while unlocked
 int starPresses = 0;
-
 
 // saved passcode
 int da_code[4] = {1, 2, 3, 4};
@@ -117,6 +113,8 @@ unsigned long lastActivityTime = 0;
 
 #define CURRENT_SENSE_PIN A1
 
+#define BATTERY_LEVEL_PIN A2
+
 // ------------------------------------------------------------
 // IMPORTANT:
 // YOU MUST CALIBRATE THIS NUMBER USING YOUR ACTUAL CURRENT
@@ -134,16 +132,13 @@ unsigned long lastActivityTime = 0;
 
 #define BLOCKED_CURRENT_ADC 90
 
-
 unsigned long servoMoveStartTime = 0;
 unsigned long highCurrentStartTime = 0;
 
 bool highCurrentDetected = false;
 
-
 // keeps track of position before movement
 int previousServoPulse = LOCK_PULSE;
-
 
 // desired/current servo positions
 int servoTargetPulse = LOCK_PULSE;
@@ -192,68 +187,19 @@ volatile bool wakeInterruptOccurred = false;
 // identifies which number is being pressed
 char identifyKey(int value) {
 
-  if (value > 0.975 * one &&
-      value < 1.025 * one)
-    return '1';
-
-
-  else if (value > 0.975 * two &&
-           value < 1.025 * two)
-    return '2';
-
-
-  else if (value > 0.975 * three &&
-           value < 1.025 * three)
-    return '3';
-
-
-  else if (value > 0.975 * four &&
-           value < 1.025 * four)
-    return '4';
-
-
-  else if (value > 0.975 * five &&
-           value < 1.025 * five)
-    return '5';
-
-
-  else if (value > 0.975 * six &&
-           value < 1.025 * six)
-    return '6';
-
-
-  else if (value > 0.975 * seven &&
-           value < 1.025 * seven)
-    return '7';
-
-
-  else if (value > 0.975 * eight &&
-           value < 1.025 * eight)
-    return '8';
-
-
-  else if (value > 0.975 * nine &&
-           value < 1.025 * nine)
-    return '9';
-
-
-  else if (value > 0.975 * zero &&
-           value < 1.025 * zero)
-    return '0';
-
-
-  else if (value > 0.975 * asterick &&
-           value < 1.025 * asterick)
-    return '*';
-
-
-  else if (value > 0.975 * hashtag &&
-           value < 1.025 * hashtag)
-    return '#';
-
-
-  else
-    return 'x';
+  if (value > 0.975 * one && value < 1.025 * one) return '1';
+  else if (value > 0.975 * two && value < 1.025 * two) return '2';
+  else if (value > 0.975 * three && value < 1.025 * three) return '3';
+  else if (value > 0.975 * four && value < 1.025 * four) return '4';
+  else if (value > 0.975 * five && value < 1.025 * five) return '5';
+  else if (value > 0.975 * six && value < 1.025 * six) return '6';
+  else if (value > 0.975 * seven && value < 1.025 * seven) return '7';
+  else if (value > 0.975 * eight && value < 1.025 * eight) return '8';
+  else if (value > 0.975 * nine && value < 1.025 * nine) return '9';
+  else if (value > 0.975 * zero && value < 1.025 * zero) return '0';
+  else if (value > 0.975 * asterick && value < 1.025 * asterick) return '*';
+  else if (value > 0.975 * hashtag && value < 1.025 * hashtag) return '#';
+  else return 'x';
 }
 
 
@@ -264,25 +210,20 @@ char identifyKey(int value) {
 
 // compares 2 arrays
 bool compareArrays(int array1[], int array2[]) {
-
   for (int i = 0; i < 4; i++) {
-
     if (array1[i] != array2[i]) {
       return false;
     }
   }
-
   return true;
 }
 
 
 // clears entered code
 void clearCode() {
-
   for (int i = 0; i < 4; i++) {
     code[i] = 0;
   }
-
   digitsEntered = 0;
 }
 
@@ -293,8 +234,7 @@ void clearCode() {
 
 
 // writes one byte directly to EEPROM
-void EEPROM_write(unsigned int address,
-                  unsigned char data) {
+void EEPROM_write(unsigned int address, unsigned char data) {
 
   // wait for previous write to finish
   while (EECR & (1 << EEPE));
@@ -343,17 +283,13 @@ unsigned char EEPROM_read(unsigned int address) {
 void savePasscode() {
 
   for (int i = 0; i < 4; i++) {
-
     EEPROM_write(
       EEPROM_CODE_START + i,
       da_code[i]
     );
   }
 
-  EEPROM_write(
-    EEPROM_MARKER,
-    EEPROM_SAVED
-  );
+  EEPROM_write(EEPROM_MARKER, EEPROM_SAVED);
 
   Serial.println("password saved");
 }
@@ -362,42 +298,27 @@ void savePasscode() {
 // loads password from EEPROM
 void loadPasscode() {
 
-  if (EEPROM_read(EEPROM_MARKER)
-      == EEPROM_SAVED) {
-
+  if (EEPROM_read(EEPROM_MARKER) == EEPROM_SAVED) {
     for (int i = 0; i < 4; i++) {
-
       da_code[i] =
         EEPROM_read(
           EEPROM_CODE_START + i
         );
     }
 
-    Serial.println(
-      "saved password loaded"
-    );
+    Serial.println("saved password loaded");
 
     current_state = powered_on;
 
-    Serial.println(
-      "enter password"
-    );
-  }
+    Serial.println("enter password");
+  } else {
+    Serial.println("no saved password");
 
-  else {
-
-    Serial.println(
-      "no saved password"
-    );
-
-    current_state =
-      set_passcode;
+    current_state = set_passcode;
 
     clearCode();
 
-    Serial.println(
-      "enter new 4 digit password"
-    );
+    Serial.println("enter new 4 digit password");
   }
 }
 
@@ -410,30 +331,22 @@ void loadPasscode() {
 // configure Timer1 for 50 Hz servo PWM
 void setup_servo() {
 
-  pinMode(
-    SERVO_PIN,
-    OUTPUT
-  );
+  pinMode(SERVO_PIN, OUTPUT);
 
   // clear Timer1 registers
   TCCR1A = 0;
   TCCR1B = 0;
 
   // Fast PWM using ICR1 as TOP
-  TCCR1A |=
-    (1 << WGM11);
+  TCCR1A |= (1 << WGM11);
 
-  TCCR1B |=
-    (1 << WGM12) |
-    (1 << WGM13);
+  TCCR1B |= (1 << WGM12) | (1 << WGM13);
 
   // PWM output on OC1A / pin 9
-  TCCR1A |=
-    (1 << COM1A1);
+  TCCR1A |= (1 << COM1A1);
 
   // prescaler = 8
-  TCCR1B |=
-    (1 << CS11);
+  TCCR1B |= (1 << CS11);
 
   // 20 ms period
   // 50 Hz
@@ -447,8 +360,7 @@ void set_servo_pulse(int pulseWidth) {
   // Timer1 runs at 0.5 us per count
   OCR1A = pulseWidth * 2;
 
-  servoCurrentPulse =
-    pulseWidth;
+  servoCurrentPulse = pulseWidth;
 }
 
 
@@ -460,9 +372,7 @@ void enable_servo_pwm() {
 
   setup_servo();
 
-  set_servo_pulse(
-    servoCurrentPulse
-  );
+  set_servo_pulse(servoCurrentPulse);
 }
 
 
@@ -470,8 +380,7 @@ void enable_servo_pwm() {
 void disable_servo_pwm() {
 
   // disconnect OC1A
-  TCCR1A &=
-    ~(1 << COM1A1);
+  TCCR1A &= ~(1 << COM1A1);
 
   // stop Timer1
   TCCR1B &=
@@ -481,16 +390,12 @@ void disable_servo_pwm() {
       (1 << CS10)
     );
 
-  digitalWrite(
-    SERVO_PIN,
-    LOW
-  );
+  digitalWrite(SERVO_PIN, LOW);
 }
 
 
 // servo power ON
 void servoPowerOn() {
-
   digitalWrite(
     SERVO_POWER_PIN,
     HIGH
@@ -502,11 +407,7 @@ void servoPowerOn() {
 
 // servo power OFF
 void servoPowerOff() {
-
-  digitalWrite(
-    SERVO_POWER_PIN,
-    LOW
-  );
+  digitalWrite(SERVO_POWER_PIN, LOW);
 }
 
 
@@ -516,58 +417,37 @@ void servoPowerOff() {
 
 
 // starts servo movement without blocking program
-void startServoMove(
-  int newPulse
-) {
+void startServoMove(int newPulse) {
 
-  previousServoPulse =
-    servoCurrentPulse;
+  previousServoPulse = servoCurrentPulse;
 
-  servoTargetPulse =
-    newPulse;
+  servoTargetPulse = newPulse;
 
-  highCurrentDetected =
-    false;
+  highCurrentDetected = false;
 
-  highCurrentStartTime =
-    0;
+  highCurrentStartTime = 0;
 
   servoPowerOn();
 
   enable_servo_pwm();
 
-  set_servo_pulse(
-    newPulse
-  );
+  set_servo_pulse(newPulse);
 
-  servoMoveStartTime =
-    millis();
+  servoMoveStartTime = millis();
 }
 
 
 // start unlocking
 void unlock_servo() {
-
-  Serial.println(
-    "servo unlocking"
-  );
-
-  startServoMove(
-    UNLOCK_PULSE
-  );
+  Serial.println("servo unlocking");
+  startServoMove(UNLOCK_PULSE);
 }
 
 
 // start locking
 void lock_servo() {
-
-  Serial.println(
-    "servo locking"
-  );
-
-  startServoMove(
-    LOCK_PULSE
-  );
+  Serial.println("servo locking");
+  startServoMove(LOCK_PULSE);
 }
 
 
@@ -578,37 +458,32 @@ void lock_servo() {
 
 // reads the current sensor
 int readServoCurrent() {
+  return analogRead(CURRENT_SENSE_PIN);
+}
 
-  return analogRead(
-    CURRENT_SENSE_PIN
-  );
+int readBatteryLevel() {
+  // put a large ass resistor to not draw current?? then multiply it????
+  return analogRead(BATTERY_LEVEL_PIN); // 8.5ish volts apparaently
 }
 
 
 // checks if servo is blocked
 bool servoBlocked() {
 
-  unsigned long moveTime =
-    millis() -
-    servoMoveStartTime;
+  unsigned long moveTime = millis() - servoMoveStartTime;
 
 
   // Ignore normal startup/inrush current
-  if (moveTime <
-      CURRENT_IGNORE_TIME) {
+  if (moveTime < CURRENT_IGNORE_TIME) {
+    highCurrentDetected = false;
 
-    highCurrentDetected =
-      false;
-
-    highCurrentStartTime =
-      0;
+    highCurrentStartTime = 0;
 
     return false;
   }
 
 
-  int currentReading =
-    readServoCurrent();
+  int currentReading = readServoCurrent();
 
 
   // Uncomment during calibration if needed
@@ -619,40 +494,23 @@ bool servoBlocked() {
   */
 
 
-  if (currentReading >=
-      BLOCKED_CURRENT_ADC) {
-
+  if (currentReading >= BLOCKED_CURRENT_ADC) {
     if (!highCurrentDetected) {
+      highCurrentDetected = true;
 
-      highCurrentDetected =
-        true;
-
-      highCurrentStartTime =
-        millis();
+      highCurrentStartTime = millis();
     }
 
 
     // Current has stayed high long enough
-    if (
-      millis() -
-      highCurrentStartTime >=
-      BLOCK_CONFIRM_TIME
-    ) {
-
+    if (millis() - highCurrentStartTime >= BLOCK_CONFIRM_TIME) {
       return true;
     }
+  } else {
+    highCurrentDetected = false;
+
+    highCurrentStartTime = 0;
   }
-
-  else {
-
-    highCurrentDetected =
-      false;
-
-    highCurrentStartTime =
-      0;
-  }
-
-
   return false;
 }
 
