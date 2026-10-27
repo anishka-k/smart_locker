@@ -156,9 +156,7 @@ volatile bool wakeInterruptOccurred = false;
 #define SERVO_POWER_PIN 7
 
 
-// ============================================================
 // EEPROM STUFF
-// ============================================================
 
 #define EEPROM_MARKER 0
 #define EEPROM_CODE_START 1
@@ -167,11 +165,7 @@ volatile bool wakeInterruptOccurred = false;
 
 char identifyKey(int value);
 
-
-// ============================================================
 // PASSWORD FUNCTIONS
-// ============================================================
-
 
 // compares 2 arrays
 bool compareArrays(int array1[], int array2[]);
@@ -180,15 +174,10 @@ bool compareArrays(int array1[], int array2[]);
 // clears entered code
 void clearCode();
 
-
-// ============================================================
 // EEPROM FUNCTIONS
-// ============================================================
-
 
 // writes one byte directly to EEPROM
 void EEPROM_write(unsigned int address, unsigned char data);
-
 
 // reads one byte directly from EEPROM
 unsigned char EEPROM_read(unsigned int address);
@@ -197,15 +186,11 @@ unsigned char EEPROM_read(unsigned int address);
 // saves passcode into EEPROM
 void savePasscode();
 
-
 // loads password from EEPROM
 void loadPasscode();
 
 
-// ============================================================
 // SERVO PWM FUNCTIONS
-// ============================================================
-
 
 // configure Timer1 for 50 Hz servo PWM
 void setup_servo();
@@ -230,11 +215,7 @@ void servoPowerOn();
 // servo power OFF
 void servoPowerOff();
 
-
-// ============================================================
 // SERVO MOVEMENT FUNCTIONS
-// ============================================================
-
 
 // starts servo movement without blocking program
 void startServoMove(int newPulse);
@@ -247,30 +228,20 @@ void unlock_servo();
 // start locking
 void lock_servo();
 
-
-// ============================================================
 // CURRENT / BLOCKAGE FUNCTIONS
-// ============================================================
-
 
 // reads the current sensor
 int readServoCurrent();
 
 int readBatteryLevel();
 
-
 // checks if servo is blocked
 bool servoBlocked();
-
 
 // return servo to previous position
 void revertServo();
 
-
-// ============================================================
 // WAKE INTERRUPT
-// ============================================================
-
 
 // setup INT0 wake button
 void setupWakeInterrupt();
@@ -278,10 +249,5 @@ void setupWakeInterrupt();
 // wake interrupt
 ISR(INT0_vect);
 
-
-// ============================================================
 // SLEEP FUNCTIONS
-// ============================================================
-
-
 void enterSleep();
