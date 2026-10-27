@@ -44,10 +44,7 @@ enum {
 
 unsigned char current_state = powered_off;
 
-
-// ============================================================
 // KEYPAD STUFF
-// ============================================================
 
 // integer value outputed by key pad for each number
 int one = 981;
@@ -79,17 +76,13 @@ int starPresses = 0;
 int da_code[4] = {1, 2, 3, 4};
 
 
-// ============================================================
 // STATE TIMERS
-// ============================================================
 
 unsigned long stateStartTime = 0;
 unsigned long lastActivityTime = 0;
 
 
-// ============================================================
 // SERVO STUFF
-// ============================================================
 
 #define SERVO_PIN 9
 
@@ -107,9 +100,7 @@ unsigned long lastActivityTime = 0;
 #define BLOCK_CONFIRM_TIME 200UL
 
 
-// ============================================================
 // BLOCKAGE DETECTION
-// ============================================================
 
 #define CURRENT_SENSE_PIN A1
 
@@ -145,9 +136,7 @@ int servoTargetPulse = LOCK_PULSE;
 int servoCurrentPulse = LOCK_PULSE;
 
 
-// ============================================================
 // SLEEP MODE
-// ============================================================
 
 #define WAKE_PIN 2
 
@@ -156,9 +145,7 @@ int servoCurrentPulse = LOCK_PULSE;
 
 volatile bool wakeInterruptOccurred = false;
 
-// ============================================================
 // OPTIONAL SERVO POWER CONTROL
-// ============================================================
 
 // Connect this pin to a MOSFET/transistor if you are physically
 // cutting power to the servo.

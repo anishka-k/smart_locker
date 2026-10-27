@@ -443,14 +443,11 @@ ISR(INT0_vect) {
 
 // ============================================================
 // SLEEP FUNCTIONS
-// ============================================================
 
 
 void enterSleep() {
 
-  Serial.println(
-    "entering power down sleep"
-  );
+  Serial.println("entering power down sleep");
 
   Serial.flush();
 
@@ -482,134 +479,88 @@ void enterSleep() {
   // --------------------------------------------------
 
   // ADC off
-  PRR |=
-    (1 << PRADC);
+  PRR |= (1 << PRADC);
 
   // Timer1 off
-  PRR |=
-    (1 << PRTIM1);
+  PRR |= (1 << PRTIM1);
 
   // SPI off
-  PRR |=
-    (1 << PRSPI);
+  PRR |= (1 << PRSPI);
 
   // Timer2 off
-  PRR |=
-    (1 << PRTIM2);
+  PRR |= (1 << PRTIM2);
 
   // TWI off
-  PRR |=
-    (1 << PRTWI);
+  PRR |= (1 << PRTWI);
 
 
-  // --------------------------------------------------
   // SET POWER-DOWN MODE
-  // --------------------------------------------------
 
   // SM2 SM1 SM0 = 0 1 0
-  SMCR &=
-    ~(
-      (1 << SM2) |
-      (1 << SM0)
-    );
+  SMCR &= ~((1 << SM2) | (1 << SM0));
 
-  SMCR |=
-    (1 << SM1);
-
+  SMCR |= (1 << SM1);
 
   // clear pending external interrupt
-  EIFR |=
-    (1 << INTF0);
+  EIFR |= (1 << INTF0);
 
 
-  wakeInterruptOccurred =
-    false;
+  wakeInterruptOccurred = false;
 
 
   // enable INT0
-  EIMSK |=
-    (1 << INT0);
-
+  EIMSK |= (1 << INT0);
 
   // enable sleep
-  SMCR |=
-    (1 << SE);
-
+  SMCR |= (1 << SE);
 
   // make sure interrupts are enabled
   sei();
 
-
-  // --------------------------------------------------
   // GO TO SLEEP
-  // --------------------------------------------------
 
   asm volatile("sleep");
 
-
-  // ==================================================
   // CPU CONTINUES HERE AFTER WAKE
-  // ==================================================
-
 
   // disable sleep
-  SMCR &=
-    ~(1 << SE);
+  SMCR &= ~(1 << SE);
 
-
-  // --------------------------------------------------
   // RESTORE HARDWARE
-  // --------------------------------------------------
-
+ 
   // ADC power ON
-  PRR &=
-    ~(1 << PRADC);
+  PRR &= ~(1 << PRADC);
 
   // Timer1 power ON
-  PRR &=
-    ~(1 << PRTIM1);
+  PRR &= ~(1 << PRTIM1);
 
   // SPI power ON
-  PRR &=
-    ~(1 << PRSPI);
+  PRR &= ~(1 << PRSPI);
 
   // Timer2 power ON
-  PRR &=
-    ~(1 << PRTIM2);
+  PRR &= ~(1 << PRTIM2);
 
   // TWI power ON
-  PRR &=
-    ~(1 << PRTWI);
+  PRR &= ~(1 << PRTWI);
 
 
   // re-enable ADC
-  ADCSRA |=
-    (1 << ADEN);
-
+  ADCSRA |= (1 << ADEN);
 
   // re-enable comparator
-  ACSR &=
-    ~(1 << ACD);
-
+  ACSR &= ~(1 << ACD);
 
   // Wait until wake button is released
-  while (
-    digitalRead(WAKE_PIN)
-    == LOW
-  ) {
-
+  while (digitalRead(WAKE_PIN) == LOW) {
     delay(5);
   }
 
 
   // clear interrupt flag
-  EIFR |=
-    (1 << INTF0);
-
+  EIFR |= (1 << INTF0);
 
   // enable wake interrupt again
-  EIMSK |=
-    (1 << INT0);
+  EIMSK |= (1 << INT0);
 
 
   keyHeld = false;
@@ -617,7 +568,6 @@ void enterSleep() {
   clearCode();
 
   current_state = powered_on;
-
 
   lastActivityTime = millis();
 

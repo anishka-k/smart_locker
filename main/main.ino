@@ -1,51 +1,27 @@
-// ============================================================
-// KEYPAD FUNCTIONS
-// ============================================================
+// identifies which number is being pressed
 
-
-// identifies which number is being pressed// ============================================================
 // SETUP
-// ============================================================
 #include "SmartLocker.h"
 
 void setup() {
 
   Serial.begin(9600);
 
-
   // keypad
-  pinMode(
-    A0,
-    INPUT
-  );
-
+  pinMode(A0, INPUT);
 
   // current sensing input
-  pinMode(
-    CURRENT_SENSE_PIN,
-    INPUT
-  );
-
+  pinMode(CURRENT_SENSE_PIN, INPUT);
 
   // wake button
-  pinMode(
-    WAKE_PIN,
-    INPUT_PULLUP
-  );
-
+  pinMode(WAKE_PIN, INPUT_PULLUP);
 
   // servo power control
-  pinMode(
-    SERVO_POWER_PIN,
-    OUTPUT
-  );
-
+  pinMode(SERVO_POWER_PIN, OUTPUT);
 
   servoPowerOn();
 
-
   setupWakeInterrupt();
-
 
   setup_servo();
 
@@ -58,92 +34,54 @@ void setup() {
     LOCK_PULSE
   );
 
-
   // give servo time to move to locked position
   delay(500);
 
-
   disable_servo_pwm();
-
 
   // password from EEPROM
   loadPasscode();
 
+  lastActivityTime = millis();
 
-  lastActivityTime =
-    millis();
-
-
-  Serial.println(
-    "Milestone 3 system ready"
-  );
+  Serial.println("Milestone 3 system ready");
 }
-
-
-// ============================================================
-// LOOP
-// ============================================================
-
 
 void loop() {
 
-
-  // ========================================================
   // READ KEYPAD
-  // ========================================================
 
-  int value =
-    analogRead(A0);
+  int value = analogRead(A0);
 
 
-  char key =
-    identifyKey(value);
+  char key = identifyKey(value);
 
 
-  bool newKeyPress =
-    false;
+  bool newKeyPress = false;
 
 
-  // --------------------------------------------------------
   // NEW KEYPRESS DETECTION
-  // --------------------------------------------------------
 
   if (key != 'x') {
 
     if (!keyHeld) {
 
-      newKeyPress =
-        true;
+      newKeyPress = true;
 
+      lastActivityTime = millis();
 
-      lastActivityTime =
-        millis();
+      Serial.print("Key pressed: ");
 
-
-      Serial.print(
-        "Key pressed: "
-      );
-
-      Serial.println(
-        key
-      );
+      Serial.println(key);
     }
 
+    keyHeld = true;
 
-    keyHeld =
-      true;
+  } else {
+    keyHeld = false;
   }
 
-  else {
-
-    keyHeld =
-      false;
-  }
-
-
-  // ========================================================
   // STORE PASSWORD DIGITS
-  // ========================================================
 
   if (newKeyPress && 
       (current_state == powered_on || 
@@ -178,15 +116,11 @@ void loop() {
     }
   }
 
-  // ========================================================
   // STATE MACHINE
-  // ========================================================
 
   switch (current_state) {
 
-    // ======================================================
     // POWERED OFF
-    // ======================================================
 
     case powered_off:
 
@@ -205,9 +139,7 @@ void loop() {
 
       break;
 
-    // ======================================================
     // WAITING FOR PASSWORD
-    // ======================================================
 
     case powered_on:
 
@@ -244,9 +176,7 @@ void loop() {
       }
       break;
 
-    // ======================================================
     // SERVO IS UNLOCKING
-    // ======================================================
 
     case unlocking:
       // Check for physical blockage
@@ -277,11 +207,7 @@ void loop() {
 
       break;
 
-
-
-    // ======================================================
     // UNLOCKED
-    // ======================================================
 
     case unlock:
       // Press * three times to lock
@@ -317,7 +243,6 @@ void loop() {
 
         starPresses = 0;
 
-
         current_state = set_passcode;
 
         Serial.println("enter new 4 digit password");
@@ -327,11 +252,7 @@ void loop() {
 
       break;
 
-
-
-    // ======================================================
     // SERVO IS LOCKING
-    // ======================================================
 
     case locking:
       // Check for physical blockage
@@ -356,11 +277,7 @@ void loop() {
 
       break;
 
-
-
-    // ======================================================
     // LOCK STATE
-    // ======================================================
 
     case lock:
 
@@ -380,9 +297,7 @@ void loop() {
       }
       break;
 
-    // ======================================================
     // WRONG PASSWORD
-    // ======================================================
 
     case wrong_passcode:
 
@@ -401,9 +316,7 @@ void loop() {
       }
       break;
 
-    // ======================================================
     // SET NEW PASSWORD
-    // ======================================================
 
     case set_passcode:
 
@@ -439,10 +352,7 @@ void loop() {
       break;
   }
 
-
-  // ========================================================
   // AUTOMATIC SLEEP
-  // ========================================================
 
   // Only sleep when:
   // - locker is locked
