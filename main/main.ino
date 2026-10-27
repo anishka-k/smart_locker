@@ -299,7 +299,7 @@ void savePasscode() {
 void loadPasscode() {
 
   if (EEPROM_read(EEPROM_MARKER) == EEPROM_SAVED) {
-    
+
     for (int i = 0; i < 4; i++) {
       da_code[i] =
         EEPROM_read(
@@ -399,11 +399,7 @@ void disable_servo_pwm() {
 
 // servo power ON
 void servoPowerOn() {
-  digitalWrite(
-    SERVO_POWER_PIN,
-    HIGH
-  );
-
+  digitalWrite(SERVO_POWER_PIN, HIGH);
   delay(20);
 }
 
