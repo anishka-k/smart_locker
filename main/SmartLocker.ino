@@ -109,19 +109,31 @@ void savePasscode() {
 void loadPasscode() {
   if (EEPROM_read(EEPROM_MARKER) == EEPROM_SAVED) {
     storedHash = 0;
+
     for (uint8_t i = 0; i < 4; i++) {
       storedHash |= (uint32_t)EEPROM_read(EEPROM_CODE_START + i) << (8 * i);
     }
 
+    changingPasscode = false;
+
     Serial.println("saved password loaded");
+
     current_state = powered_on;
+
     Serial.println("enter password");
 
   } else {
+
     Serial.println("no saved password");
+
+    changingPasscode = false;
+
     current_state = set_passcode;
+
     clearCode();
+
     Serial.println("enter new 4 digit password");
+
   }
 }
 
@@ -549,12 +561,12 @@ uint32_t fnvByte(uint32_t h, uint8_t b) {
   return h;
 }
 
-uint32_t hashPin(const int *digits) {
+uint32_t hashPin(const int *pin) {
   uint32_t h = FNV_OFFSET ^ PIN_SALT;
 
   for (uint16_t r = 0; r < PIN_ROUNDS; r++) {
     for (uint8_t i = 0; i < 4; i++) {
-      h = fnvByte(h, (uint8_t)('0' + digits[i]));
+      h = fnvByte(h, (uint8_t)('0' + pin[i]));
     }
     for (uint8_t i = 0; i < 4; i++) {
       h = fnvByte(h, (uint8_t)(PIN_SALT >> (8 * i)));

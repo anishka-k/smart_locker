@@ -66,6 +66,8 @@ int code[4] = {0, 0, 0, 0};
 // stores the number of digits inputed
 int digitsEntered = 0;
 
+bool changingPasscode = false;
+
 // tracks if a number is being held
 bool keyHeld = false;
 
@@ -112,7 +114,7 @@ const uint16_t PIN_ROUNDS = 2000;
 const uint32_t FNV_OFFSET = 2166136261UL;
 const uint32_t FNV_PRIME  = 16777619UL;
 
-extern uint32_t storedHash = 0;
+uint32_t storedHash = 0;
 
 
 // ------------------------------------------------------------
@@ -170,6 +172,7 @@ volatile bool wakeInterruptOccurred = false;
 #define EEPROM_MARKER 0
 #define EEPROM_CODE_START 1
 #define EEPROM_SAVED 55
+
 
 
 char identifyKey(int value);
@@ -262,5 +265,5 @@ ISR(INT0_vect);
 void enterSleep();
 
 uint32_t fnvByte(uint32_t h, uint8_t b);
-uint32_t hashPin(const char *pin);
+uint32_t hashPin(const int *pin);
 bool pinMatches(const int *digits);
