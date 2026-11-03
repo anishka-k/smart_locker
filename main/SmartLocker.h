@@ -38,36 +38,6 @@ enum {
 #define ZERO 668
 #define HASHTAG 462
 
-<<<<<<< Updated upstream
-// place holder code for what the user inputs
-int code[4] = {0, 0, 0, 0};
-
-// stores the number of digits inputed
-int digitsEntered = 0;
-
-bool changingPasscode = false;
-
-// tracks if a number is being held
-bool keyHeld = false;
-
-// counts * presses while unlocked
-int starPresses = 0;
-
-// saved passcode
-//int da_code[4] = {1, 2, 3, 4};
-
-// STATE TIMERS
-
-unsigned long stateStartTime = 0;
-unsigned long lastActivityTime = 0;
-
-
-// SERVO STUFF
-
-#define SERVO_PIN 9
-
-=======
->>>>>>> Stashed changes
 // Change these values if your tested servo positions are different
 #define LOCK_PULSE 1000
 #define UNLOCK_PULSE 2000
@@ -80,27 +50,8 @@ unsigned long lastActivityTime = 0;
 
 // Current must remain high for this long to count as blocked
 #define BLOCK_CONFIRM_TIME 200UL
-<<<<<<< Updated upstream
 
 
-// BLOCKAGE DETECTION
-
-#define CURRENT_SENSE_PIN A1
-
-#define BATTERY_LEVEL_PIN A2
-
-// hashing
-
-const uint32_t PIN_SALT   = 0xA5C3E17BUL;
-const uint16_t PIN_ROUNDS = 2000;
-const uint32_t FNV_OFFSET = 2166136261UL;
-const uint32_t FNV_PRIME  = 16777619UL;
-
-uint32_t storedHash = 0;
-
-#define RED_PIN 3
-#define GREEN_PIN 4
-#define YELLOW_PIN 5
 
 
 // ------------------------------------------------------------
@@ -118,29 +69,22 @@ uint32_t storedHash = 0;
 // 90 is only a starting value.
 // ------------------------------------------------------------
 
-=======
->>>>>>> Stashed changes
 #define BLOCKED_CURRENT_ADC 90
+
+// STATE TIMERS
+unsigned long stateStartTime = 0;
+unsigned long lastActivityTime = 0;
 
 //global variable
 // passcode stuff
 int code[4] = {0, 0, 0, 0}; // place holder code for what the user inputs
 int digitsEntered = 0; // stores the number of digits inputed
 bool changingPasscode = false; // whether the passcode is being hard reset
+// tracks if a number is being held
+bool keyHeld = false;
 
-bool keyHeld = false; // tracks if a number is being held
 int starPresses = 0; // counts * presses while unlocked
 
-// STATE TIMERS
-unsigned long stateStartTime = 0;
-unsigned long lastActivityTime = 0;
-
-// hashing
-const uint32_t PIN_SALT   = 0xA5C3E17BUL; // random value
-const uint16_t PIN_ROUNDS = 2000; // number of rounds of hashing
-const uint32_t FNV_OFFSET = 2166136261UL;
-const uint32_t FNV_PRIME  = 16777619UL;
-uint32_t storedHash = 0;
 
 // servo
 unsigned long servoMoveStartTime = 0;
@@ -153,6 +97,15 @@ int previousServoPulse = LOCK_PULSE; // keeps track of position before movement
 // desired/current servo positions
 int servoTargetPulse = LOCK_PULSE;
 int servoCurrentPulse = LOCK_PULSE;
+
+// hashing
+
+const uint32_t PIN_SALT   = 0xA5C3E17BUL;
+const uint16_t PIN_ROUNDS = 2000;
+const uint32_t FNV_OFFSET = 2166136261UL;
+const uint32_t FNV_PRIME  = 16777619UL;
+
+uint32_t storedHash = 0;
 
 
 // SLEEP MODE
@@ -168,11 +121,7 @@ volatile bool wakeInterruptOccurred = false;
 #define EEPROM_CODE_START 1
 #define EEPROM_SAVED 55
 
-<<<<<<< Updated upstream
-=======
 unsigned char current_state = powered_off;
->>>>>>> Stashed changes
-
 
 char identifyKey(int value);
 
