@@ -8,7 +8,7 @@ void setup() {
   Serial.begin(9600);
 
   // keypad
-  pinMode(A0, INPUT);
+  pinMode(KEYPAD, INPUT);
 
   // current sensing input
   pinMode(CURRENT_SENSE_PIN, INPUT);

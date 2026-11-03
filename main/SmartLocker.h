@@ -1,20 +1,3 @@
-// ============================================================
-// PERSONAL SMART LOCKER
-// COMPLETE MILESTONE 3 CODE
-//
-// Milestone 3A:
-// Servo blockage detection using current measurement on A1.
-// If the motor remains above the blockage threshold while moving,
-// the servo reverses to its previous position.
-//
-// Milestone 3B:
-// Runs directly on ATmega328P.
-// Servo PWM and EEPROM are controlled without external libraries.
-//
-// Milestone 3C:
-// ATmega328P enters Power-Down sleep after inactivity.
-// Pushbutton on PD2 / INT0 / Arduino D2 wakes the system.
-//
 // KEYPAD:        A0
 // CURRENT SENSE: A1
 // SERVO PWM:     D9 / PB1 / OC1A
@@ -25,26 +8,21 @@
 // to the servo during sleep.
 // ============================================================
 
-
-// ============================================================
 // STATES
-// ============================================================
-
 enum {
-  powered_off,
-  powered_on,
-  unlocking,
-  unlock,
-  locking,
-  lock,
-  wrong_passcode,
-  set_passcode,
-  low_battery
+  powered_off, powered_on, unlocking, unlock, locking,
+  lock, wrong_passcode, set_passcode, low_battery
 };
 
-unsigned char current_state = powered_off;
-
-// KEYPAD STUFF
+// pins
+#define SERVO_PIN 9
+#define RED_PIN 3
+#define GREEN_PIN 4
+#define YELLOW_PIN 5
+#define KEYPAD A0
+#define CURRENT_SENSE_PIN A1 // blockage detection
+#define BATTERY_LEVEL_PIN A2
+#define WAKE_PIN 2 // wake up button pin
 
 // integer value outputed by key pad for each number
 int one = 981;
@@ -60,6 +38,7 @@ int asterick = 829;
 int zero = 668;
 int hashtag = 462;
 
+<<<<<<< Updated upstream
 // place holder code for what the user inputs
 int code[4] = {0, 0, 0, 0};
 
@@ -86,6 +65,8 @@ unsigned long lastActivityTime = 0;
 
 #define SERVO_PIN 9
 
+=======
+>>>>>>> Stashed changes
 // Change these values if your tested servo positions are different
 #define LOCK_PULSE 1000
 #define UNLOCK_PULSE 2000
@@ -98,6 +79,7 @@ unsigned long lastActivityTime = 0;
 
 // Current must remain high for this long to count as blocked
 #define BLOCK_CONFIRM_TIME 200UL
+<<<<<<< Updated upstream
 
 
 // BLOCKAGE DETECTION
@@ -121,15 +103,37 @@ unsigned long lastActivityTime = 0;
 // 90 is only a starting value.
 // ------------------------------------------------------------
 
+=======
+>>>>>>> Stashed changes
 #define BLOCKED_CURRENT_ADC 90
 
+//global variable
+// passcode stuff
+int code[4] = {0, 0, 0, 0}; // place holder code for what the user inputs
+int digitsEntered = 0; // stores the number of digits inputed
+bool changingPasscode = false; // whether the passcode is being hard reset
+
+bool keyHeld = false; // tracks if a number is being held
+int starPresses = 0; // counts * presses while unlocked
+
+// STATE TIMERS
+unsigned long stateStartTime = 0;
+unsigned long lastActivityTime = 0;
+
+// hashing
+const uint32_t PIN_SALT   = 0xA5C3E17BUL; // random value
+const uint16_t PIN_ROUNDS = 2000; // number of rounds of hashing
+const uint32_t FNV_OFFSET = 2166136261UL;
+const uint32_t FNV_PRIME  = 16777619UL;
+uint32_t storedHash = 0;
+
+// servo
 unsigned long servoMoveStartTime = 0;
 unsigned long highCurrentStartTime = 0;
 
 bool highCurrentDetected = false;
 
-// keeps track of position before movement
-int previousServoPulse = LOCK_PULSE;
+int previousServoPulse = LOCK_PULSE; // keeps track of position before movement
 
 // desired/current servo positions
 int servoTargetPulse = LOCK_PULSE;
@@ -138,30 +142,21 @@ int servoCurrentPulse = LOCK_PULSE;
 
 // SLEEP MODE
 
-#define WAKE_PIN 2
-
 // sleep after 10 seconds without user activity
 #define SLEEP_TIME 10000UL
 
 volatile bool wakeInterruptOccurred = false;
 
-// OPTIONAL SERVO POWER CONTROL
-
-// Connect this pin to a MOSFET/transistor if you are physically
-// cutting power to the servo.
-//
-// If you are NOT using servo power switching yet, the code will
-// still work, but D7 will simply have no connection.
-
 #define SERVO_POWER_PIN 7
-
-
-// EEPROM STUFF
 
 #define EEPROM_MARKER 0
 #define EEPROM_CODE_START 1
 #define EEPROM_SAVED 55
 
+<<<<<<< Updated upstream
+=======
+unsigned char current_state = powered_off;
+>>>>>>> Stashed changes
 
 char identifyKey(int value);
 

@@ -15,22 +15,7 @@ char identifyKey(int value) {
   else return 'x';
 }
 
-
-// ============================================================
 // PASSWORD FUNCTIONS
-// ============================================================
-
-
-// compares 2 arrays
-bool compareArrays(int array1[], int array2[]) {
-  for (int i = 0; i < 4; i++) {
-    if (array1[i] != array2[i]) {
-      return false;
-    }
-  }
-  return true;
-}
-
 
 // clears entered code
 void clearCode() {
@@ -40,11 +25,7 @@ void clearCode() {
   digitsEntered = 0;
 }
 
-
-// ============================================================
 // EEPROM FUNCTIONS
-// ============================================================
-
 
 // writes one byte directly to EEPROM
 void EEPROM_write(unsigned int address, unsigned char data) {
@@ -73,7 +54,6 @@ void EEPROM_write(unsigned int address, unsigned char data) {
   // restore interrupt status
   SREG = oldSREG;
 }
-
 
 // reads one byte directly from EEPROM
 unsigned char EEPROM_read(unsigned int address) {
@@ -138,11 +118,7 @@ void loadPasscode() {
   }
 }
 
-
-// ============================================================
 // SERVO PWM FUNCTIONS
-// ============================================================
-
 
 // configure Timer1 for 50 Hz servo PWM
 void setup_servo() {
@@ -554,3 +530,44 @@ void enterSleep() {
 
   Serial.println("enter password");
 }
+<<<<<<< Updated upstream
+=======
+
+
+uint32_t fnvByte(uint32_t h, uint8_t b) {
+  h ^= b;
+  h *= FNV_PRIME;
+  return h;
+}
+
+uint32_t hashPin(const int *pin) {
+  uint32_t h = FNV_OFFSET ^ PIN_SALT;
+
+  for (uint16_t r = 0; r < PIN_ROUNDS; r++) {
+    for (uint8_t i = 0; i < 4; i++) {
+      h = fnvByte(h, (uint8_t)('0' + pin[i]));
+    }
+    for (uint8_t i = 0; i < 4; i++) {
+      h = fnvByte(h, (uint8_t)(PIN_SALT >> (8 * i)));
+    }
+    h ^= h >> 15;
+    h *= 0x2C1B3C6DUL;
+    h ^= h >> 12;
+  }
+  return h;
+}
+
+bool pinMatches(const int *digits) {
+  return hashPin(digits) == storedHash;
+}
+
+// compares 2 arrays
+bool compareArrays(int array1[], int array2[]) {
+  for (int i = 0; i < 4; i++) {
+    if (array1[i] != array2[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+>>>>>>> Stashed changes
