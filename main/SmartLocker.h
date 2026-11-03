@@ -116,6 +116,10 @@ const uint32_t FNV_PRIME  = 16777619UL;
 
 uint32_t storedHash = 0;
 
+#define RED_PIN 3
+#define GREEN_PIN 4
+#define YELLOW_PIN 5
+
 
 // ------------------------------------------------------------
 // IMPORTANT:

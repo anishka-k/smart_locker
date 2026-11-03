@@ -10,6 +10,10 @@ void setup() {
   // keypad
   pinMode(A0, INPUT);
 
+  // leds
+  pinMode(RED_PIN, OUTPUT);
+  pinMode(GREEN_PIN, OUTPUT);
+
   // current sensing input
   pinMode(CURRENT_SENSE_PIN, INPUT);
 
@@ -180,6 +184,7 @@ void loop() {
     // UNLOCKED
 
     case unlock:
+      digitalWrite(GREEN_PIN, HIGH);
       // Press * three times to lock
       if (newKeyPress && key == '*') {
         starPresses++;
@@ -191,20 +196,22 @@ void loop() {
           Serial.println("locking locker");
           starPresses = 0;
           lock_servo();
+          digitalWrite(GREEN_PIN, LOW);
           current_state = locking;
           lastActivityTime = millis();
         }
       }
 
       // Press # to change password
-if (newKeyPress && key == '#') {
-  clearCode();
-  starPresses = 0;
-  changingPasscode = true;
-  current_state = set_passcode;
-  Serial.println("enter new 4 digit password");
-  lastActivityTime = millis();
-}
+      if (newKeyPress && key == '#') {
+        clearCode();
+        starPresses = 0;
+        changingPasscode = true;
+        digitalWrite(GREEN_PIN, LOW);
+        current_state = set_passcode;
+        Serial.println("enter new 4 digit password");
+        lastActivityTime = millis();
+      }
 
       break;
 
@@ -247,11 +254,12 @@ if (newKeyPress && key == '#') {
     // WRONG PASSWORD
 
     case wrong_passcode:
+      digitalWrite(RED_PIN, HIGH);
       if (millis() - stateStartTime >= 5000) {
         clearCode();
         Serial.println("try again");
         Serial.println("enter password");
-        
+        digitalWrite(RED_PIN, LOW);
         current_state = powered_on;
         lastActivityTime = millis();
       }
