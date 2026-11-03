@@ -47,18 +47,18 @@ unsigned char current_state = powered_off;
 // KEYPAD STUFF
 
 // integer value outputed by key pad for each number
-#define ONE 981;
-#define TWO 763;
-#define THREE 506;
-#define FOUR 937;
-#define FIVE 736;
-#define SIX 494;
-#define SEVEN 877;
-#define EIGHT 699;
-#define NINE 477;
-#define ASTERICK 829;
-#define ZERO 668;
-#define HASHTAG 462;
+#define ONE 981
+#define TWO 763
+#define THREE 506
+#define FOUR 937
+#define FIVE 736
+#define SIX 494
+#define SEVEN 877
+#define EIGHT 699
+#define NINE 477
+#define ASTERICK 829
+#define ZERO 668
+#define HASHTAG 462
 
 // place holder code for what the user inputs
 int code[4] = {0, 0, 0, 0};
@@ -105,6 +105,12 @@ unsigned long lastActivityTime = 0;
 #define CURRENT_SENSE_PIN A1
 
 #define BATTERY_LEVEL_PIN A2
+
+// hashing
+
+#define SALT 0xAF1835C6UL
+#define ROUNDS 2000UL
+
 
 // ------------------------------------------------------------
 // IMPORTANT:
