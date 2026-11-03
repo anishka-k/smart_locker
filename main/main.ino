@@ -1,27 +1,20 @@
-// identifies which number is being pressed
 
-// SETUP
 #include "SmartLocker.h"
 
 void setup() {
 
   Serial.begin(9600);
 
-  // keypad
-  pinMode(KEYPAD, INPUT);
+  pinMode(KEYPAD, INPUT); // keypad
 
-  // leds
-  pinMode(RED_PIN, OUTPUT);
+  pinMode(RED_PIN, OUTPUT); // leds
   pinMode(GREEN_PIN, OUTPUT);
 
-  // current sensing input
-  pinMode(CURRENT_SENSE_PIN, INPUT);
+  pinMode(CURRENT_SENSE_PIN, INPUT); // current sensing input
 
-  // wake button
-  pinMode(WAKE_PIN, INPUT_PULLUP);
+  pinMode(WAKE_PIN, INPUT_PULLUP); // wake button
 
-  // servo power control
-  pinMode(SERVO_POWER_PIN, OUTPUT);
+  pinMode(SERVO_POWER_PIN, OUTPUT); // servo power control
 
   servoPowerOn();
 
@@ -29,48 +22,31 @@ void setup() {
 
   setup_servo();
 
-
-  // Start with physical servo at locked position
-  servoCurrentPulse = LOCK_PULSE;
+  servoCurrentPulse = LOCK_PULSE; // Start with physical servo at locked position
 
   set_servo_pulse(LOCK_PULSE);
 
-  // give servo time to move to locked position
-  delay(500);
+  delay(500); // // give servo time to move to locked position
 
   disable_servo_pwm();
 
-  // password from EEPROM
-// PASSWORD RECOVERY
-// Hold the wake button while powering on
-// to reset the forgotten password.
+  // passcode recovery
+  if (digitalRead(WAKE_PIN) == LOW) {
+    Serial.println("PASSWORD RESET REQUESTED");
+  
+    EEPROM_write(EEPROM_MARKER, 0); // Invalidate old password
 
-  // PASSWORD RECOVERY
-// Hold wake button while powering on
+    storedHash = 0;
+    clearCode();
+    changingPasscode = false;
+    current_state = set_passcode;
 
-if (digitalRead(WAKE_PIN) == LOW) {
+    Serial.println("old password erased");
+    Serial.println("enter new 4 digit password");
 
-  Serial.println("PASSWORD RESET REQUESTED");
-
-  // Invalidate old password
-  EEPROM_write(EEPROM_MARKER, 0);
-
-  storedHash = 0;
-
-  clearCode();
-
-  changingPasscode = false;
-
-  current_state = set_passcode;
-
-  Serial.println("old password erased");
-  Serial.println("enter new 4 digit password");
-
-} else {
-
-  loadPasscode();
-
-}
+  } else {
+    loadPasscode();
+  }
 
   lastActivityTime = millis();
 
@@ -83,7 +59,6 @@ void loop() {
   bool newKeyPress = false;
 
   // NEW KEYPRESS DETECTION
-
   if (key != 'x') {
     if (!keyHeld) {
       newKeyPress = true;
@@ -91,14 +66,12 @@ void loop() {
       Serial.print("Key pressed: ");
       Serial.println(key);
     }
-
     keyHeld = true;
   } else {
     keyHeld = false;
   }
 
   // STORE PASSWORD DIGITS
-
   if (newKeyPress && 
       (current_state == powered_on || 
       current_state == set_passcode) && 
@@ -125,7 +98,6 @@ void loop() {
   }
 
   // STATE MACHINE
-
   switch (current_state) {
     // POWERED OFF
     case powered_off:
@@ -268,14 +240,11 @@ void loop() {
 
     // SET NEW PASSWORD
 
-    // SET NEW PASSWORD
-
 case set_passcode:
 
   if (digitsEntered == 4) {
 
-    // Save new password to EEPROM
-    savePasscode();
+    savePasscode(); // Save new password to EEPROM
 
     Serial.println("new password saved");
 
@@ -287,7 +256,6 @@ case set_passcode:
     starPresses = 0;
 
     if (changingPasscode) {
-
       // Password changed while locker was unlocked
       Serial.println("locker remains unlocked");
       Serial.println("press * three times to lock");
@@ -321,9 +289,7 @@ case set_passcode:
   // - no partial password has been entered
   // - no activity for 10 seconds
 
-  if (current_state == powered_on && 
-      digitsEntered == 0 &&
-      millis() - lastActivityTime >= SLEEP_TIME) {
+  if (current_state == powered_on && digitsEntered == 0 && millis() - lastActivityTime >= SLEEP_TIME) {
     enterSleep();
   }
   delay(20);

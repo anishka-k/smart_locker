@@ -411,24 +411,17 @@ ISR(INT0_vect) {
 void enterSleep() {
 
   Serial.println("entering power down sleep");
-
   Serial.flush();
   
   // STOP SERVO
-
   disable_servo_pwm();
-
   servoPowerOff();
 
   // DISABLE ADC
-
-  ADCSRA &=
-    ~(1 << ADEN);
-
+  ADCSRA &= ~(1 << ADEN);
 
   // disable analog comparator
   ACSR |= (1 << ACD);
-
 
   // POWER REDUCTION
 
@@ -447,7 +440,6 @@ void enterSleep() {
   // TWI off
   PRR |= (1 << PRTWI);
 
-
   // SET POWER-DOWN MODE
 
   // SM2 SM1 SM0 = 0 1 0
@@ -458,9 +450,7 @@ void enterSleep() {
   // clear pending external interrupt
   EIFR |= (1 << INTF0);
 
-
   wakeInterruptOccurred = false;
-
 
   // enable INT0
   EIMSK |= (1 << INT0);
@@ -497,10 +487,9 @@ void enterSleep() {
   // TWI power ON
   PRR &= ~(1 << PRTWI);
 
-
   // re-enable ADC
   ADCSRA |= (1 << ADEN);
-
+  
   // re-enable comparator
   ACSR &= ~(1 << ACD);
 
@@ -509,24 +498,16 @@ void enterSleep() {
     delay(5);
   }
 
-
   // clear interrupt flag
   EIFR |= (1 << INTF0);
-
   // enable wake interrupt again
   EIMSK |= (1 << INT0);
 
-
   keyHeld = false;
-
   clearCode();
-
   current_state = powered_on;
-
   lastActivityTime = millis();
-
   Serial.println("system awake");
-
   Serial.println("enter password");
 }
 
