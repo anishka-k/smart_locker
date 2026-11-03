@@ -25,18 +25,18 @@ enum {
 #define WAKE_PIN 2 // wake up button pin
 
 // integer value outputed by key pad for each number
-int one = 981;
-int two = 763;
-int three = 506;
-int four = 937;
-int five = 736;
-int six = 494;
-int seven = 877;
-int eight = 699;
-int nine = 477;
-int asterick = 829;
-int zero = 668;
-int hashtag = 462;
+#define ONE 981
+#define TWO 763
+#define THREE 506
+#define FOUR 937
+#define FIVE 736
+#define SIX 494
+#define SEVEN 877
+#define EIGHT 699
+#define NINE 477
+#define ASTERICK 829
+#define ZERO 668
+#define HASHTAG 462
 
 <<<<<<< Updated upstream
 // place holder code for what the user inputs
@@ -45,6 +45,8 @@ int code[4] = {0, 0, 0, 0};
 // stores the number of digits inputed
 int digitsEntered = 0;
 
+bool changingPasscode = false;
+
 // tracks if a number is being held
 bool keyHeld = false;
 
@@ -52,8 +54,7 @@ bool keyHeld = false;
 int starPresses = 0;
 
 // saved passcode
-int da_code[4] = {1, 2, 3, 4};
-
+//int da_code[4] = {1, 2, 3, 4};
 
 // STATE TIMERS
 
@@ -87,6 +88,20 @@ unsigned long lastActivityTime = 0;
 #define CURRENT_SENSE_PIN A1
 
 #define BATTERY_LEVEL_PIN A2
+
+// hashing
+
+const uint32_t PIN_SALT   = 0xA5C3E17BUL;
+const uint16_t PIN_ROUNDS = 2000;
+const uint32_t FNV_OFFSET = 2166136261UL;
+const uint32_t FNV_PRIME  = 16777619UL;
+
+uint32_t storedHash = 0;
+
+#define RED_PIN 3
+#define GREEN_PIN 4
+#define YELLOW_PIN 5
+
 
 // ------------------------------------------------------------
 // IMPORTANT:
@@ -157,6 +172,7 @@ volatile bool wakeInterruptOccurred = false;
 =======
 unsigned char current_state = powered_off;
 >>>>>>> Stashed changes
+
 
 char identifyKey(int value);
 
@@ -246,3 +262,7 @@ ISR(INT0_vect);
 
 // SLEEP FUNCTIONS
 void enterSleep();
+
+uint32_t fnvByte(uint32_t h, uint8_t b);
+uint32_t hashPin(const int *pin);
+bool pinMatches(const int *digits);
