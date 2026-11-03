@@ -73,8 +73,7 @@ bool keyHeld = false;
 int starPresses = 0;
 
 // saved passcode
-int da_code[4] = {1, 2, 3, 4};
-
+//int da_code[4] = {1, 2, 3, 4};
 
 // STATE TIMERS
 
@@ -108,8 +107,12 @@ unsigned long lastActivityTime = 0;
 
 // hashing
 
-#define SALT 0xAF1835C6UL
-#define ROUNDS 2000UL
+const uint32_t PIN_SALT   = 0xA5C3E17BUL;
+const uint16_t PIN_ROUNDS = 2000;
+const uint32_t FNV_OFFSET = 2166136261UL;
+const uint32_t FNV_PRIME  = 16777619UL;
+
+extern uint32_t storedHash = 0;
 
 
 // ------------------------------------------------------------
@@ -257,3 +260,7 @@ ISR(INT0_vect);
 
 // SLEEP FUNCTIONS
 void enterSleep();
+
+uint32_t fnvByte(uint32_t h, uint8_t b);
+uint32_t hashPin(const char *pin);
+bool pinMatches(const int *digits);

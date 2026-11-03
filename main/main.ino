@@ -109,25 +109,22 @@ void loop() {
     // WAITING FOR PASSWORD
     case powered_on:
       // correct password
-      if (digitsEntered == 4 && compareArrays(da_code, code)) {
-        Serial.println("correct password");
+      if (digitsEntered == 4) {
+        bool ok = pinMatches(code);
         clearCode();
-        starPresses = 0;
-        // begin servo unlock
-        unlock_servo();
-        current_state = unlocking;
+
+        if (ok) {
+          Serial.println("correct passcode");
+          starPresses = 0;
+          unlock_servo();
+          current_state = unlocking;
+        } else {
+          Serial.println("wrong password");
+          stateStartTime = millis();
+          current_state = wrong_passcode;
+        }
         lastActivityTime = millis();
       }
-
-      // incorrect password
-      else if (digitsEntered == 4 && !compareArrays(da_code, code)) {
-        Serial.println("wrong password");
-        clearCode();
-        stateStartTime = millis();
-        current_state = wrong_passcode;
-        lastActivityTime = millis();
-      }
-
       break;
 
     // SERVO IS UNLOCKING
@@ -235,18 +232,8 @@ void loop() {
 
     case set_passcode:
       if (digitsEntered == 4) {
-        for (int i = 0; i < 4; i++) {
-          da_code[i] = code[i];
-        }
-
         savePasscode();
         Serial.print("new password saved: ");
-
-        for (int i = 0; i < 4; i++) {
-          Serial.print(da_code[i]);
-        }
-
-        Serial.println();
         clearCode();
 
         Serial.println("locker remains unlocked");

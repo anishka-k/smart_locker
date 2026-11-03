@@ -94,14 +94,11 @@ unsigned char EEPROM_read(unsigned int address) {
 
 // saves passcode into EEPROM
 void savePasscode() {
+  storedHash = hashPin(code);
 
-  for (int i = 0; i < 4; i++) {
-    EEPROM_write(
-      EEPROM_CODE_START + i,
-      da_code[i]
-    );
+  for (uint8_t i = 0; i < 4; i++) {
+    EEPROM_write(EEPROM_CODE_START + i, (uint8_t)(storedHash >> (8 * i)));
   }
-
   EEPROM_write(EEPROM_MARKER, EEPROM_SAVED);
 
   Serial.println("password saved");
@@ -110,30 +107,20 @@ void savePasscode() {
 
 // loads password from EEPROM
 void loadPasscode() {
-
   if (EEPROM_read(EEPROM_MARKER) == EEPROM_SAVED) {
-
-    for (int i = 0; i < 4; i++) {
-      da_code[i] =
-        EEPROM_read(
-          EEPROM_CODE_START + i
-        );
+    storedHash = 0;
+    for (uint8_t i = 0; i < 4; i++) {
+      storedHash |= (uint32_t)EEPROM_read(EEPROM_CODE_START + i) << (8 * i);
     }
 
     Serial.println("saved password loaded");
-
     current_state = powered_on;
-
     Serial.println("enter password");
 
   } else {
-
     Serial.println("no saved password");
-
     current_state = set_passcode;
-
     clearCode();
-
     Serial.println("enter new 4 digit password");
   }
 }
@@ -553,4 +540,32 @@ void enterSleep() {
   Serial.println("system awake");
 
   Serial.println("enter password");
+}
+
+
+uint32_t fnvByte(uint32_t h, uint8_t b) {
+  h ^= b;
+  h *= FNV_PRIME;
+  return h;
+}
+
+uint32_t hashPin(const int *digits) {
+  uint32_t h = FNV_OFFSET ^ PIN_SALT;
+
+  for (uint16_t r = 0; r < PIN_ROUNDS; r++) {
+    for (uint8_t i = 0; i < 4; i++) {
+      h = fnvByte(h, (uint8_t)('0' + digits[i]));
+    }
+    for (uint8_t i = 0; i < 4; i++) {
+      h = fnvByte(h, (uint8_t)(PIN_SALT >> (8 * i)));
+    }
+    h ^= h >> 15;
+    h *= 0x2C1B3C6DUL;
+    h ^= h >> 12;
+  }
+  return h;
+}
+
+bool pinMatches(const int *digits) {
+  return hashPin(digits) == storedHash;
 }
