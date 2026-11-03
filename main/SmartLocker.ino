@@ -259,16 +259,13 @@ bool servoBlocked() {
 
   unsigned long moveTime = millis() - servoMoveStartTime;
 
-
   // Ignore normal startup/inrush current
   if (moveTime < CURRENT_IGNORE_TIME) {
     highCurrentDetected = false;
-
     highCurrentStartTime = 0;
 
     return false;
   }
-
 
   int currentReading = readServoCurrent();
 
@@ -406,10 +403,7 @@ ISR(INT0_vect) {
 }
 
 // SLEEP FUNCTIONS
-
-
 void enterSleep() {
-
   Serial.println("entering power down sleep");
   Serial.flush();
   
@@ -489,7 +483,7 @@ void enterSleep() {
 
   // re-enable ADC
   ADCSRA |= (1 << ADEN);
-  
+
   // re-enable comparator
   ACSR &= ~(1 << ACD);
 
@@ -524,9 +518,11 @@ uint32_t hashPin(const int *pin) {
     for (uint8_t i = 0; i < 4; i++) {
       h = fnvByte(h, (uint8_t)('0' + pin[i]));
     }
+
     for (uint8_t i = 0; i < 4; i++) {
       h = fnvByte(h, (uint8_t)(PIN_SALT >> (8 * i)));
     }
+
     h ^= h >> 15;
     h *= 0x2C1B3C6DUL;
     h ^= h >> 12;
