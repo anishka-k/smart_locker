@@ -2,11 +2,6 @@
 // CURRENT SENSE: A1
 // SERVO PWM:     D9 / PB1 / OC1A
 // WAKE BUTTON:   D2 / PD2 / INT0
-//
-// Optional:
-// SERVO_POWER_PIN can control a MOSFET/transistor that cuts power
-// to the servo during sleep.
-// ============================================================
 
 // STATES
 enum {
@@ -23,6 +18,7 @@ enum {
 #define CURRENT_SENSE_PIN A1 // blockage detection
 #define BATTERY_LEVEL_PIN A2
 #define WAKE_PIN 2 // wake up button pin
+#define SERVO_POWER_PIN 7
 
 // integer value outputed by key pad for each number
 #define ONE 981
@@ -51,9 +47,11 @@ enum {
 // Current must remain high for this long to count as blocked
 #define BLOCK_CONFIRM_TIME 200UL
 
+#define EEPROM_MARKER 0
+#define EEPROM_CODE_START 1
+#define EEPROM_SAVED 55
 
-
-
+//TODO
 // ------------------------------------------------------------
 // IMPORTANT:
 // YOU MUST CALIBRATE THIS NUMBER USING YOUR ACTUAL CURRENT
@@ -67,13 +65,11 @@ enum {
 // blocked/stall current.
 //
 // 90 is only a starting value.
-// ------------------------------------------------------------
 
 #define BLOCKED_CURRENT_ADC 90
+// sleep after 10 seconds without user activity
+#define SLEEP_TIME 10000UL
 
-// STATE TIMERS
-unsigned long stateStartTime = 0;
-unsigned long lastActivityTime = 0;
 
 //global variable
 // passcode stuff
@@ -107,26 +103,20 @@ const uint32_t FNV_PRIME  = 16777619UL;
 
 uint32_t storedHash = 0;
 
-
+// STATE TIMERS
+unsigned long stateStartTime = 0;
+unsigned long lastActivityTime = 0;
 // SLEEP MODE
-
-// sleep after 10 seconds without user activity
-#define SLEEP_TIME 10000UL
 
 volatile bool wakeInterruptOccurred = false;
 
-#define SERVO_POWER_PIN 7
-
-#define EEPROM_MARKER 0
-#define EEPROM_CODE_START 1
-#define EEPROM_SAVED 55
-
 unsigned char current_state = powered_off;
+
+
 
 char identifyKey(int value);
 
 // PASSWORD FUNCTIONS
-
 // compares 2 arrays
 bool compareArrays(int array1[], int array2[]);
 
