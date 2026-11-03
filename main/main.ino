@@ -10,6 +10,10 @@ void setup() {
   // keypad
   pinMode(A0, INPUT);
 
+  // leds
+  pinMode(RED_PIN, OUTPUT);
+  pinMode(GREEN_PIN, OUTPUT);
+
   // current sensing input
   pinMode(CURRENT_SENSE_PIN, INPUT);
 
@@ -37,7 +41,36 @@ void setup() {
   disable_servo_pwm();
 
   // password from EEPROM
+// PASSWORD RECOVERY
+// Hold the wake button while powering on
+// to reset the forgotten password.
+
+  // PASSWORD RECOVERY
+// Hold wake button while powering on
+
+if (digitalRead(WAKE_PIN) == LOW) {
+
+  Serial.println("PASSWORD RESET REQUESTED");
+
+  // Invalidate old password
+  EEPROM_write(EEPROM_MARKER, 0);
+
+  storedHash = 0;
+
+  clearCode();
+
+  changingPasscode = false;
+
+  current_state = set_passcode;
+
+  Serial.println("old password erased");
+  Serial.println("enter new 4 digit password");
+
+} else {
+
   loadPasscode();
+
+}
 
   lastActivityTime = millis();
 
@@ -109,25 +142,22 @@ void loop() {
     // WAITING FOR PASSWORD
     case powered_on:
       // correct password
-      if (digitsEntered == 4 && compareArrays(da_code, code)) {
-        Serial.println("correct password");
+      if (digitsEntered == 4) {
+        bool ok = pinMatches(code);
         clearCode();
-        starPresses = 0;
-        // begin servo unlock
-        unlock_servo();
-        current_state = unlocking;
+
+        if (ok) {
+          Serial.println("correct passcode");
+          starPresses = 0;
+          unlock_servo();
+          current_state = unlocking;
+        } else {
+          Serial.println("wrong password");
+          stateStartTime = millis();
+          current_state = wrong_passcode;
+        }
         lastActivityTime = millis();
       }
-
-      // incorrect password
-      else if (digitsEntered == 4 && !compareArrays(da_code, code)) {
-        Serial.println("wrong password");
-        clearCode();
-        stateStartTime = millis();
-        current_state = wrong_passcode;
-        lastActivityTime = millis();
-      }
-
       break;
 
     // SERVO IS UNLOCKING
@@ -154,6 +184,7 @@ void loop() {
     // UNLOCKED
 
     case unlock:
+      digitalWrite(GREEN_PIN, HIGH);
       // Press * three times to lock
       if (newKeyPress && key == '*') {
         starPresses++;
@@ -165,6 +196,7 @@ void loop() {
           Serial.println("locking locker");
           starPresses = 0;
           lock_servo();
+          digitalWrite(GREEN_PIN, LOW);
           current_state = locking;
           lastActivityTime = millis();
         }
@@ -174,6 +206,8 @@ void loop() {
       if (newKeyPress && key == '#') {
         clearCode();
         starPresses = 0;
+        changingPasscode = true;
+        digitalWrite(GREEN_PIN, LOW);
         current_state = set_passcode;
         Serial.println("enter new 4 digit password");
         lastActivityTime = millis();
@@ -220,11 +254,12 @@ void loop() {
     // WRONG PASSWORD
 
     case wrong_passcode:
+      digitalWrite(RED_PIN, HIGH);
       if (millis() - stateStartTime >= 5000) {
         clearCode();
         Serial.println("try again");
         Serial.println("enter password");
-        
+        digitalWrite(RED_PIN, LOW);
         current_state = powered_on;
         lastActivityTime = millis();
       }
@@ -233,31 +268,49 @@ void loop() {
 
     // SET NEW PASSWORD
 
-    case set_passcode:
-      if (digitsEntered == 4) {
-        for (int i = 0; i < 4; i++) {
-          da_code[i] = code[i];
-        }
+    // SET NEW PASSWORD
 
-        savePasscode();
-        Serial.print("new password saved: ");
+case set_passcode:
 
-        for (int i = 0; i < 4; i++) {
-          Serial.print(da_code[i]);
-        }
+  if (digitsEntered == 4) {
 
-        Serial.println();
-        clearCode();
+    // Save new password to EEPROM
+    savePasscode();
 
-        Serial.println("locker remains unlocked");
-        Serial.println("press * three times to lock");
+    Serial.println("new password saved");
 
-        current_state = unlock;
-        starPresses = 0;
-        lastActivityTime = millis();
-      }
+    Serial.print("storedHash saved: 0x");
+    Serial.println(storedHash, HEX);
 
-      break;
+    clearCode();
+
+    starPresses = 0;
+
+    if (changingPasscode) {
+
+      // Password changed while locker was unlocked
+      Serial.println("locker remains unlocked");
+      Serial.println("press * three times to lock");
+
+      current_state = unlock;
+
+    } else {
+
+      // Initial setup or password recovery
+      Serial.println("locker remains locked");
+      Serial.println("enter new password to unlock");
+
+      current_state = powered_on;
+
+    }
+
+    changingPasscode = false;
+
+    lastActivityTime = millis();
+
+  }
+
+  break;
   }
 
   // AUTOMATIC SLEEP
