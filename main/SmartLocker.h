@@ -47,18 +47,18 @@ unsigned char current_state = powered_off;
 // KEYPAD STUFF
 
 // integer value outputed by key pad for each number
-int one = 981;
-int two = 763;
-int three = 506;
-int four = 937;
-int five = 736;
-int six = 494;
-int seven = 877;
-int eight = 699;
-int nine = 477;
-int asterick = 829;
-int zero = 668;
-int hashtag = 462;
+#define ONE 981;
+#define TWO 763;
+#define THREE 506;
+#define FOUR 937;
+#define FIVE 736;
+#define SIX 494;
+#define SEVEN 877;
+#define EIGHT 699;
+#define NINE 477;
+#define ASTERICK 829;
+#define ZERO 668;
+#define HASHTAG 462;
 
 // place holder code for what the user inputs
 int code[4] = {0, 0, 0, 0};

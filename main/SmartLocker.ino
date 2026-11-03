@@ -1,17 +1,17 @@
 
 char identifyKey(int value) {
-  if (value > 0.975 * one && value < 1.025 * one) return '1';
-  else if (value > 0.975 * two && value < 1.025 * two) return '2';
-  else if (value > 0.975 * three && value < 1.025 * three) return '3';
-  else if (value > 0.975 * four && value < 1.025 * four) return '4';
-  else if (value > 0.975 * five && value < 1.025 * five) return '5';
-  else if (value > 0.975 * six && value < 1.025 * six) return '6';
-  else if (value > 0.975 * seven && value < 1.025 * seven) return '7';
-  else if (value > 0.975 * eight && value < 1.025 * eight) return '8';
-  else if (value > 0.975 * nine && value < 1.025 * nine) return '9';
-  else if (value > 0.975 * zero && value < 1.025 * zero) return '0';
-  else if (value > 0.975 * asterick && value < 1.025 * asterick) return '*';
-  else if (value > 0.975 * hashtag && value < 1.025 * hashtag) return '#';
+  if (value > 0.975 * ONE && value < 1.025 * ONE) return '1';
+  else if (value > 0.975 * TWO && value < 1.025 * TWO) return '2';
+  else if (value > 0.975 * THREE && value < 1.025 * THREE) return '3';
+  else if (value > 0.975 * FOUR && value < 1.025 * FOUR) return '4';
+  else if (value > 0.975 * FIVE && value < 1.025 * FIVE) return '5';
+  else if (value > 0.975 * SIX && value < 1.025 * SIX) return '6';
+  else if (value > 0.975 * SEVEN && value < 1.025 * SEVEN) return '7';
+  else if (value > 0.975 * EIGHT && value < 1.025 * EIGHT) return '8';
+  else if (value > 0.975 * NINE && value < 1.025 * NINE) return '9';
+  else if (value > 0.975 * ZERO && value < 1.025 * ZERO) return '0';
+  else if (value > 0.975 * ASTERICK && value < 1.025 * ASTERICK) return '*';
+  else if (value > 0.975 * HASHTAG && value < 1.025 * HASHTAG) return '#';
   else return 'x';
 }
 
