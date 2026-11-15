@@ -11,6 +11,7 @@ void setup() {
 
   pinMode(RED_PIN, OUTPUT); // leds
   pinMode(GREEN_PIN, OUTPUT);
+  pinMode(YELLOW_PIN, OUTPUT);
 
   pinMode(CURRENT_SENSE_PIN, INPUT); // current sensing input
 
@@ -129,6 +130,8 @@ void loop() {
           Serial.println("wrong password");
           stateStartTime = millis();
           current_state = wrong_passcode;
+          digitalWrite(RED_PIN, HIGH);
+          Serial.println("Red LED on");
         }
         lastActivityTime = millis();
       }
@@ -145,7 +148,9 @@ void loop() {
       if (millis() - servoMoveStartTime >= SERVO_MOVE_TIME) {
         current_state = unlock;
         digitalWrite(GREEN_PIN, HIGH);
+        Serial.println("Green LED on");
         beepUnlock();
+        Serial.println("Unlock Beep");
         disable_servo_pwm();
         servoCurrentPulse = UNLOCK_PULSE;
         starPresses = 0;
@@ -172,6 +177,7 @@ void loop() {
           starPresses = 0;
           lock_servo();
           digitalWrite(GREEN_PIN, LOW);
+          Serial.println("Green LED off");
           current_state = locking;
           lastActivityTime = millis();
         }
@@ -183,7 +189,10 @@ void loop() {
         starPresses = 0;
         changingPasscode = true;
         digitalWrite(GREEN_PIN, LOW);
+        Serial.println("Green LED off");
         current_state = set_passcode;
+        digitalWrite(YELLOW_PIN, HIGH);
+        Serial.println("Yellow LED on");
         Serial.println("enter new 4 digit password");
         lastActivityTime = millis();
       }
@@ -205,6 +214,7 @@ void loop() {
         servoCurrentPulse = LOCK_PULSE;
         current_state = lock;
         beepLock();
+        Serial.println("Unlock Beep");
         stateStartTime = millis();
         Serial.println("locker locked");
       }
@@ -214,12 +224,15 @@ void loop() {
     // LOCK STATE
 
     case lock:
-
+      digitalWrite(GREEN_PIN, HIGH);
+      digitalWrite(RED_PIN, HIGH);
       // short state before returning
       // to password entry
       if (millis() - stateStartTime >= 250) {
         clearCode();
         stateStartTime = 0;
+        digitalWrite(GREEN_PIN, LOW);
+        digitalWrite(RED_PIN, LOW);
         current_state = powered_on;
         lastActivityTime = millis();
         Serial.println("enter password");
@@ -230,12 +243,12 @@ void loop() {
     // WRONG PASSWORD
 
     case wrong_passcode:
-      digitalWrite(RED_PIN, HIGH);
       if (millis() - stateStartTime >= 5000) {
         clearCode();
         Serial.println("try again");
         Serial.println("enter password");
         digitalWrite(RED_PIN, LOW);
+        Serial.println("Red LED off");
         current_state = powered_on;
         lastActivityTime = millis();
       }
@@ -266,7 +279,8 @@ case set_passcode:
 
       current_state = unlock;
       beepUnlock();
-    
+      digitalWrite(YELLOW_PIN, LOW);
+      Serial.println("Yellow LED off");
     } else {
 
       // Initial setup or password recovery
