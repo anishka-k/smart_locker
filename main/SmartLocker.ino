@@ -543,3 +543,15 @@ bool compareArrays(int array1[], int array2[]) {
   }
   return true;
 }
+
+void beepUnlock() {
+  tone(BUZZER_PIN, 1200, 100);
+  delay(120);
+  tone(BUZZER_PIN, 1800, 150);
+}
+
+void beepLock() {
+  tone(BUZZER_PIN, 1800, 100);
+  delay(120);
+  tone(BUZZER_PIN, 1200, 150);
+}
