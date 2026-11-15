@@ -209,3 +209,4 @@ bool pinMatches(const int *digits);
 
 void beepUnlock();
 void beepLock();
+void buttonPress();

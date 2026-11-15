@@ -555,3 +555,8 @@ void beepLock() {
   delay(120);
   tone(BUZZER_PIN, 1200, 150);
 }
+
+void buttonPress() {
+  tone(BUZZER_PIN, 1800, 100);
+  delay(120);
+}

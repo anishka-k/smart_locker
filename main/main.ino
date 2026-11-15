@@ -63,9 +63,11 @@ void loop() {
 
   // NEW KEYPRESS DETECTION
   if (key != 'x') {
+    //buttonPress();
     if (!keyHeld) {
       newKeyPress = true;
       lastActivityTime = millis();
+      buttonPress();
       Serial.print("Key pressed: ");
       Serial.println(key);
     }
