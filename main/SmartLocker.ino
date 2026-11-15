@@ -489,6 +489,7 @@ void enterSleep() {
 
   // Wait until wake button is released
   while (digitalRead(WAKE_PIN) == LOW) {
+    checkBattery();
     delay(5);
   }
 
@@ -559,4 +560,38 @@ void beepLock() {
 void buttonPress() {
   tone(BUZZER_PIN, 1800, 100);
   delay(120);
+}
+
+float readBatteryVolts() {
+  readBatteryLevel();
+  uint32_t sum = 0;
+  for (uint8_t i = 0; i < BATTERY_SAMPLES; i++) {
+    sum += readBatteryLevel();
+  }
+  float pinVolts = (sum / (float)BATTERY_SAMPLES) * ADC_VREF / 1023.0;
+  return pinVolts * (BATTERY_DIVIDER_R1 + BATTERY_DIVIDER_R2) / (float)BATTERY_DIVIDER_R2;
+}
+
+void checkBattery() {
+  float v = readBatteryVolts();
+  Serial.print("Battery volts: ");
+  Serial.println(v);
+
+  if (v < LOW_BATTERY_VOLTS) {
+    if (lowBatteryCount < LOW_BATTERY_CONFIRMS) lowBatteryCount++;
+  } else if (v > LOW_BATTERY_VOLTS + LOW_BATTERY_HYST) {
+    lowBatteryCount = 0;
+  }
+  lowBattery = (lowBatteryCount >= LOW_BATTERY_CONFIRMS);
+}
+
+void alertLowBattery() {
+  Serial.println("LOW BATTERY");
+  for (uint8_t i = 0; i < 3; i++) {
+    digitalWrite(YELLOW_PIN, HIGH);
+    tone(BUZZER_PIN, 2700, 60);
+    delay(80);
+    digitalWrite(YELLOW_PIN, LOW);
+    delay(120);
+  }
 }

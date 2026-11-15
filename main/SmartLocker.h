@@ -52,6 +52,17 @@ enum {
 #define EEPROM_CODE_START 1
 #define EEPROM_SAVED 55
 
+#define BATTERY_DIVIDER_R1   2200000UL
+#define BATTERY_DIVIDER_R2   1000000UL
+#define ADC_VREF             5.0 
+#define LOW_BATTERY_VOLTS    7.5
+#define LOW_BATTERY_HYST     0.3
+#define BATTERY_SAMPLES      8
+#define LOW_BATTERY_CONFIRMS 2
+
+bool lowBattery = false;
+uint8_t lowBatteryCount = 0;
+
 //TODO
 // ------------------------------------------------------------
 // IMPORTANT:
@@ -210,3 +221,7 @@ bool pinMatches(const int *digits);
 void beepUnlock();
 void beepLock();
 void buttonPress();
+
+float readBatteryVolts();
+void checkBattery();
+void alertLowBattery();

@@ -50,7 +50,7 @@ void setup() {
   } else {
     loadPasscode();
   }
-
+  checkBattery();
   lastActivityTime = millis();
 
   Serial.println("Milestone 3 system ready");
@@ -181,6 +181,9 @@ void loop() {
           digitalWrite(GREEN_PIN, LOW);
           Serial.println("Green LED off");
           current_state = locking;
+          if (lowBattery) {
+            alertLowBattery();
+          }
           lastActivityTime = millis();
         }
       }
