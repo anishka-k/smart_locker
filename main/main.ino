@@ -5,6 +5,8 @@ void setup() {
 
   Serial.begin(9600);
 
+  pinMode(BUZZER_PIN, OUTPUT);
+
   pinMode(KEYPAD, INPUT); // keypad
 
   pinMode(RED_PIN, OUTPUT); // leds
@@ -141,9 +143,11 @@ void loop() {
       }
       // successful movement completed
       if (millis() - servoMoveStartTime >= SERVO_MOVE_TIME) {
+        current_state = unlock;
+        digitalWrite(GREEN_PIN, HIGH);
+        beepUnlock();
         disable_servo_pwm();
         servoCurrentPulse = UNLOCK_PULSE;
-        current_state = unlock;
         starPresses = 0;
         Serial.println("locker unlocked");
         Serial.println("press * three times to lock");
@@ -156,7 +160,6 @@ void loop() {
     // UNLOCKED
 
     case unlock:
-      digitalWrite(GREEN_PIN, HIGH);
       // Press * three times to lock
       if (newKeyPress && key == '*') {
         starPresses++;
@@ -201,6 +204,7 @@ void loop() {
         disable_servo_pwm();
         servoCurrentPulse = LOCK_PULSE;
         current_state = lock;
+        beepLock();
         stateStartTime = millis();
         Serial.println("locker locked");
       }
@@ -261,7 +265,8 @@ case set_passcode:
       Serial.println("press * three times to lock");
 
       current_state = unlock;
-
+      beepUnlock();
+    
     } else {
 
       // Initial setup or password recovery

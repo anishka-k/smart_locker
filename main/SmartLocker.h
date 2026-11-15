@@ -19,6 +19,7 @@ enum {
 #define BATTERY_LEVEL_PIN A2
 #define WAKE_PIN 2 // wake up button pin
 #define SERVO_POWER_PIN 7
+#define BUZZER_PIN 6
 
 // integer value outputed by key pad for each number
 #define ONE 981
@@ -205,3 +206,6 @@ void enterSleep();
 uint32_t fnvByte(uint32_t h, uint8_t b);
 uint32_t hashPin(const int *pin);
 bool pinMatches(const int *digits);
+
+void beepUnlock();
+void beepLock();
