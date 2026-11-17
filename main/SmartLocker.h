@@ -1,27 +1,33 @@
-// KEYPAD:        A0
-// CURRENT SENSE: A1
-// SERVO PWM:     D9 / PB1 / OC1A
-// WAKE BUTTON:   D2 / PD2 / INT0
+#ifndef SMARTLOCKER_H
+#define SMARTLOCKER_H
 
 // STATES
 enum {
-  powered_off, powered_on, unlocking, unlock, locking,
-  lock, wrong_passcode, set_passcode, low_battery
+  powered_off,
+  powered_on,
+  unlocking,
+  unlock,
+  locking,
+  lock,
+  wrong_passcode,
+  set_passcode,
+  low_battery,
+  motor_fault
 };
 
-// pins
+// PINS
 #define SERVO_PIN 9
 #define RED_PIN 3
 #define GREEN_PIN 4
 #define YELLOW_PIN 5
 #define KEYPAD A0
-#define CURRENT_SENSE_PIN A1 // blockage detection
+#define CURRENT_SENSE_PIN A1
 #define BATTERY_LEVEL_PIN A2
-#define WAKE_PIN 2 // wake up button pin
+#define WAKE_PIN 2
 #define SERVO_POWER_PIN 7
 #define BUZZER_PIN 6
 
-// integer value outputed by key pad for each number
+// KEYPAD ADC VALUES
 #define ONE 981
 #define TWO 763
 #define THREE 506
@@ -35,178 +41,95 @@ enum {
 #define ZERO 668
 #define HASHTAG 462
 
-// Change these values if your tested servo positions are different
+// SERVO SETTINGS
+// Target: ATmega328P at 16 MHz
 #define LOCK_PULSE 1000
 #define UNLOCK_PULSE 2000
-
-// Amount of time allowed for servo movement
 #define SERVO_MOVE_TIME 700UL
 
-// Ignore current spike at the beginning of servo movement
 #define CURRENT_IGNORE_TIME 150UL
-
-// Current must remain high for this long to count as blocked
 #define BLOCK_CONFIRM_TIME 200UL
 
+// Must be calibrated using your current-sensing circuit.
+#define BLOCKED_CURRENT_ADC 90
+
+#define SLEEP_TIME 10000UL
+#define KEY_DEBOUNCE_TIME 35UL
+
+// EEPROM
 #define EEPROM_MARKER 0
 #define EEPROM_CODE_START 1
-#define EEPROM_SAVED 55
+#define EEPROM_LEGACY 55
+#define EEPROM_SAVED 56
 
-//TODO
-// ------------------------------------------------------------
-// IMPORTANT:
-// YOU MUST CALIBRATE THIS NUMBER USING YOUR ACTUAL CURRENT
-// SENSING CIRCUIT.
-//
-// Read A1 while:
-// 1. Servo is moving normally
-// 2. Servo is briefly blocked
-//
-// Choose a threshold above normal moving current but below the
-// blocked/stall current.
-//
-// 90 is only a starting value.
+// PASSWORD
+// Four digits preserve your original interface.
+// A four-digit PIN remains vulnerable to offline guessing.
+#define PIN_LENGTH 4
+#define PIN_ROUNDS 2000
 
-#define BLOCKED_CURRENT_ADC 90
-// sleep after 10 seconds without user activity
-#define SLEEP_TIME 10000UL
+#if PIN_LENGTH < 4 || PIN_LENGTH > 16
+#error "PIN_LENGTH must be between 4 and 16"
+#endif
 
+// BATTERY
+// Replace with measured regulated VCC in millivolts.
+#define BATTERY_ADC_MV 5000UL
 
-//global variable
-// passcode stuff
-int code[4] = {0, 0, 0, 0}; // place holder code for what the user inputs
-int digitsEntered = 0; // stores the number of digits inputed
-bool changingPasscode = false; // whether the passcode is being hard reset
-// tracks if a number is being held
-bool keyHeld = false;
+// Battery+ -> 1 Mohm -> A2 -> 470 kohm -> GND
+// Add 100 nF from A2 to GND.
+#define BATTERY_TOP_KOHM 1000UL
+#define BATTERY_BOTTOM_KOHM 470UL
 
-int starPresses = 0; // counts * presses while unlocked
+// Starting thresholds; validate with your actual battery and load.
+#define BATTERY_LOW_MV 6500UL
+#define BATTERY_CLEAR_MV 6800UL
+#define BATTERY_CHECK_TIME 2000UL
 
-
-// servo
-unsigned long servoMoveStartTime = 0;
-unsigned long highCurrentStartTime = 0;
-
-bool highCurrentDetected = false;
-
-int previousServoPulse = LOCK_PULSE; // keeps track of position before movement
-
-// desired/current servo positions
-int servoTargetPulse = LOCK_PULSE;
-int servoCurrentPulse = LOCK_PULSE;
-
-// hashing
-
-const uint32_t PIN_SALT   = 0xA5C3E17BUL;
-const uint16_t PIN_ROUNDS = 2000;
-const uint32_t FNV_OFFSET = 2166136261UL;
-const uint32_t FNV_PRIME  = 16777619UL;
-
-uint32_t storedHash = 0;
-
-// STATE TIMERS
-unsigned long stateStartTime = 0;
-unsigned long lastActivityTime = 0;
-// SLEEP MODE
-
-volatile bool wakeInterruptOccurred = false;
-
-unsigned char current_state = powered_off;
-
-
-
+// FUNCTION DECLARATIONS
 char identifyKey(int value);
-
-// PASSWORD FUNCTIONS
-// compares 2 arrays
-bool compareArrays(int array1[], int array2[]);
-
-
-// clears entered code
 void clearCode();
 
-// EEPROM FUNCTIONS
-
-// writes one byte directly to EEPROM
 void EEPROM_write(unsigned int address, unsigned char data);
-
-// reads one byte directly from EEPROM
 unsigned char EEPROM_read(unsigned int address);
-
-
-// saves passcode into EEPROM
 void savePasscode();
-
-// loads password from EEPROM
 void loadPasscode();
 
-
-// SERVO PWM FUNCTIONS
-
-// configure Timer1 for 50 Hz servo PWM
 void setup_servo();
-
-
-// sets servo PWM pulse width
 void set_servo_pulse(int pulseWidth);
-
-
-// enables Timer1 servo output
 void enable_servo_pwm();
-
-
-// stops PWM output
 void disable_servo_pwm();
-
-
-// servo power ON
 void servoPowerOn();
-
-
-// servo power OFF
 void servoPowerOff();
 
-// SERVO MOVEMENT FUNCTIONS
-
-// starts servo movement without blocking program
 void startServoMove(int newPulse);
-
-
-// start unlocking
 void unlock_servo();
-
-
-// start locking
 void lock_servo();
+void finishServoMove();
+void stopServo();
 
-// CURRENT / BLOCKAGE FUNCTIONS
-
-// reads the current sensor
 int readServoCurrent();
+bool servoBlocked();
+void revertServo();
+void motorFault();
 
 int readBatteryLevel();
+void checkBattery(bool force);
 
-// checks if servo is blocked
-bool servoBlocked();
-
-// return servo to previous position
-void revertServo();
-
-// WAKE INTERRUPT
-
-// setup INT0 wake button
 void setupWakeInterrupt();
-
-// wake interrupt
-ISR(INT0_vect);
-
-// SLEEP FUNCTIONS
 void enterSleep();
 
-uint32_t fnvByte(uint32_t h, uint8_t b);
-uint32_t hashPin(const int *pin);
+uint32_t rotateRight(uint32_t x, uint8_t n);
+void sha256Short(const uint8_t *data, uint8_t len, uint8_t *out);
+void hashPin(const int *pin, uint8_t *out);
+uint32_t legacyPinHash(const int *pin);
 bool pinMatches(const int *digits);
 
 void beepUnlock();
 void beepLock();
 void buttonPress();
+void startSound(uint8_t kind);
+void updateSound();
+void updateUI();
+
+#endif
