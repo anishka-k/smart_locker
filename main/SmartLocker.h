@@ -210,3 +210,9 @@ bool pinMatches(const int *digits);
 void beepUnlock();
 void beepLock();
 void buttonPress();
+void passcodeSaved();
+void buttonPress();
+
+float readBatteryVolts();
+void checkBattery();
+void alertLowBattery();

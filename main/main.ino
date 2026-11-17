@@ -269,7 +269,7 @@ case set_passcode:
 
     Serial.print("storedHash saved: 0x");
     Serial.println(storedHash, HEX);
-
+    passcodeSaved();
     clearCode();
 
     starPresses = 0;
