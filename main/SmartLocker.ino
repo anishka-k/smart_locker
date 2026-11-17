@@ -1206,4 +1206,5 @@ bool pinMatches(const int *digits) {
   }
 
   return difference == 0;
+  
 }
